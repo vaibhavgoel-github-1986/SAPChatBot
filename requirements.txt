@@ -1,1 +1,10 @@
 streamlit
+langchain_openai
+requests
+python-dotenv
+pydantic
+langchain
+langgraph 
+langsmith
+tavily-python 
+langchain_community
