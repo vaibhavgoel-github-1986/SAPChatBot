@@ -1,5 +1,4 @@
 import re
-import json
 from typing import Dict, List
 from Tools.GetClassSourceCode import get_class_source_code
 from Tools.RemoveComments import remove_comments

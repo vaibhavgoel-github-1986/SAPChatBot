@@ -8,3 +8,4 @@ langgraph
 langsmith
 tavily-python 
 langchain_community
+python-dotenv
