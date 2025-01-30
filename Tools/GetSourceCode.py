@@ -5,7 +5,7 @@ from DocumentLoaders.Github import GitHubLoader
 @tool
 def get_source_code(
     object_name: str,
-    object_type: str,  # Default to class
+    object_type: str,
     repo: str = "cisco-it-finance/sap-brim-repo",
     branch: str = "dha-main",
 ):

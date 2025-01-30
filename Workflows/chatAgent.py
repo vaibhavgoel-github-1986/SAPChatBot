@@ -18,7 +18,11 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
 
+import sys
+sys.path.append('/Users/vaibhago/Documents/SAPChatBot')
+
 from ChatModels.CiscoAzureOpenAI import CiscoAzureOpenAI
+from SequentialAgents.BasicToolNode import BasicToolNode
 from Utilities.TokenManager import TokenManager
 from Tools.GetDependencies import get_dependencies
 from Tools.GetSourceCode import get_source_code
@@ -33,52 +37,7 @@ class State(TypedDict):
     # in the annotation defines how this state key should be updated
     # (in this case, it appends messages to the list, rather than overwriting them)
     messages: Annotated[list, add_messages]
-    tool_outputs: list
-
-
-class BasicToolNode:
-    """A node that runs the tools requested in the last AIMessage."""
-
-    def __init__(self, tools: list) -> None:
-        self.tools_by_name = {tool.name: tool for tool in tools}
-
-    def __call__(self, inputs: dict):
-        try:
-            if messages := inputs.get("messages", []):
-                message = messages[-1]
-            else:
-                raise ValueError("No message found in input")
-
-            outputs = []
-
-            for tool_call in getattr(message, "tool_calls", []):
-                tool_name = tool_call.get("name", "")
-                tool_args = tool_call.get("args", {})
-
-                if tool_name in self.tools_by_name:
-                    tool_result = self.tools_by_name[tool_name].invoke(tool_args)
-                    outputs.append(
-                        ToolMessage(
-                            content=json.dumps(tool_result, indent=2),
-                            name=tool_name,
-                            tool_call_id=tool_call["id"],
-                        )
-                    )
-                else:
-                    print(f"Warning: Tool '{tool_name}' not found.")
-
-            return {"messages": outputs}
-
-        except Exception as e:
-            return {
-                "messages": [
-                    ToolMessage(
-                        content=f"An error occurred while processing of the tool: '{tool_name}'",
-                        name=tool_name,
-                        tool_call_id=tool_call["id"],
-                    )
-                ]
-            }
+    tool_outputs: Annotated[list, add_messages]
 
 
 def route_tools(
@@ -182,12 +141,15 @@ def token_usage():
     print(f"Output Tokens: {token_usage['completion_tokens']}")
     print(f"Total Tokens: {token_usage['total_tokens']}")
     print(f"Next: {snapshot.next}")
-    print()
 
+    # Print stored tool outputs
+    tool_output = snapshot.values.get("tool_outputs", [])
+    print(f"Tool Outputs: {len(tool_output)}")
+    for index, tool_output in enumerate(tool_output):
+        print(f"{index + 1}. Tool: '{tool_output.name}' was called.")
 
 def stream_graph_updates(user_input: str):
-
-    # try:
+    
     events = graph.stream(
         {"messages": [{"role": "user", "content": user_input}]},
         config,
@@ -200,11 +162,6 @@ def stream_graph_updates(user_input: str):
         else:
             print("\nNo messages received from the assistant.\n")
 
-    # except Exception as e:
-    #     print(f"\nException in stream_graph_updates: {str(e)}")
-    # traceback.print_exc()
-    # return {"error": str(e)}
-
 
 def start_chatbot():
     while True:
@@ -213,9 +170,11 @@ def start_chatbot():
             if user_input.lower() in ["quit", "exit", "q"]:
                 print("Goodbye!")
                 break
-
+            
+            # Stream the graph updates
             stream_graph_updates(user_input)
 
+            # Print the token usage
             token_usage()
 
         except Exception as e:
@@ -230,17 +189,4 @@ def get_graph():
         f.write(png_data)
 
 
-def main():
 
-    # Start the chatbot
-    print("Starting SAP ABAP Chatbot...")
-    try:
-        start_chatbot()
-    except KeyboardInterrupt:
-        print("\nChatbot terminated by user.")
-
-    # get_graph()
-
-
-if __name__ == "__main__":
-    main()
