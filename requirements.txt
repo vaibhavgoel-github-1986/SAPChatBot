@@ -4,7 +4,9 @@ requests
 python-dotenv
 pydantic
 langchain
-langgraph 
+IPython
+typing_extensions
+langgraph
 langsmith
 tavily-python 
 langchain_community
