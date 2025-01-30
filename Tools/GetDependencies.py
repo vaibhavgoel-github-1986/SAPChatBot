@@ -2,6 +2,7 @@ import re
 from typing import Dict, List
 from Tools.GetClassSourceCode import get_class_source_code
 from Tools.RemoveComments import remove_comments
+from langchain_core.tools import tool
 
 def extract_table_names(method_body: str) -> List[str]:
     """
@@ -102,13 +103,21 @@ def extract_class_references(method_body: str) -> List[str]:
 
     return ordered_unique
 
-def get_dependencies(class_name: str, class_code: str = None) -> Dict[str, Dict[str, List[str]]]:
+@tool
+def get_dependencies(class_name: str) -> Dict[str, Dict[str, List[str]]]:
+    """
+    Returns JSON Schema for dependencies in a class
 
+    Args:
+        class_name (str): Class Name
+
+    Returns:
+        A JSON Schema for dependencies in a class
+    """
     if not class_name:
         raise ValueError("Please provide a `class_name`.")
     
-    if not class_code:
-        class_code = get_class_source_code(class_name)
+    class_code = get_class_source_code(class_name)
 
     class_code = remove_comments(class_code)
     
@@ -127,9 +136,11 @@ def get_dependencies(class_name: str, class_code: str = None) -> Dict[str, Dict[
 
     for method in methods:
         dependencies["methods"][method] = {
+            "codelines": 0,
             "tables": [],
             "function_modules": [],
             "classes": [],
+            "source_code": "",
         }
 
         # Extract method body
@@ -137,6 +148,11 @@ def get_dependencies(class_name: str, class_code: str = None) -> Dict[str, Dict[
             r"METHOD\s+" + method + r".*?ENDMETHOD", re.IGNORECASE | re.DOTALL
         )
         method_body = method_body_pattern.search(class_code).group()
+        dependencies["methods"][method]["source_code"] = method_body
+        
+        # Count lines of ABAP code in the method body, excluding blank lines
+        code_lines = [line for line in method_body.splitlines() if line.strip()]
+        dependencies["methods"][method]["codelines"] = len(code_lines)
 
         # Extract tables being used in SELECT queries 
         dependencies["methods"][method]["tables"] = extract_table_names(method_body)
