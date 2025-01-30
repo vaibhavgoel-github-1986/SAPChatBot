@@ -1,8 +1,8 @@
 import streamlit as st
 import time
-from Tools.GetDependencies import get_dependencies
+from Utilities.GetDependencies import get_dependencies
 from ChatModels.CiscoAzureOpenAI import CiscoAzureOpenAI
-from Utilities.TokenManager import TokenManager
+from ChatModels.TokenManager import TokenManager
 from pprint import pformat
 from langchain.chains import LLMChain
 from typing import Annotated

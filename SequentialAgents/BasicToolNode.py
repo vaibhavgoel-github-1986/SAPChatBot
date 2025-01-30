@@ -19,7 +19,7 @@ class BasicToolNode:
             outputs = []
 
             # Ensure tool_outputs is initialized
-            tool_outputs = inputs.get("tool_outputs", [])
+            # tool_outputs = inputs.get("tool_outputs", [])
 
             for tool_call in getattr(message, "tool_calls", []):
                 tool_name = tool_call.get("name", "")
@@ -33,33 +33,35 @@ class BasicToolNode:
                         name=tool_name,
                         tool_call_id=tool_call["id"],
                     )
-
-                    tool_outputs.append(tool_message)
+                    
+                    outputs.append(tool_message)
+                    
+                    # tool_outputs.append(tool_message)
 
                     # Only return summarized content for LLM
-                    if tool_name == "get_source_code":
-                        outputs.append(
-                            ToolMessage(
-                                content="Source Code retrieved successfully.",
-                                name=tool_name,
-                                tool_call_id=tool_call["id"],
-                            )
-                        )
-                    else:
-                        outputs.append(tool_message)
+                    # if tool_name == "get_source_code":
+                    #     outputs.append(
+                    #         ToolMessage(
+                    #             content="Source Code retrieved successfully.",
+                    #             name=tool_name,
+                    #             tool_call_id=tool_call["id"],
+                    #         )
+                    #     )
+                    # else:
+                    #     outputs.append(tool_message)
                 else:
                     print(f"Warning: Tool '{tool_name}' not found.")
 
             return {
                 "messages": outputs,
-                "tool_outputs": tool_outputs,
+                # "tool_outputs": tool_outputs,
             }  # Ensure tool_outputs is returned
 
         except Exception as e:
             return {
                 "messages": [
                     ToolMessage(
-                        content=f"Error occurred while processing tool '{tool_name}'. Error: {str(e)}",
+                        content=f"Error occurred in tool '{tool_name}': {str(e)}",
                         name=tool_name,
                         tool_call_id=tool_call["id"],
                     )

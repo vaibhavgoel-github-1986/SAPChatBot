@@ -19,14 +19,14 @@ from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
 
 import sys
-sys.path.append('/Users/vaibhago/Documents/SAPChatBot')
+# sys.path.append('/Users/vaibhago/Documents/SAPChatBot')
 
 from ChatModels.CiscoAzureOpenAI import CiscoAzureOpenAI
 from SequentialAgents.BasicToolNode import BasicToolNode
-from Utilities.TokenManager import TokenManager
-from Tools.GetDependencies import get_dependencies
-from Tools.GetSourceCode import get_source_code
-from langgraph.prebuilt import create_react_agent
+from ChatModels.TokenManager import TokenManager 
+from Tools.SourceCodeTool import SourceCodeTool
+from Tools.ClassDefTool import ClassDefTool
+ 
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langgraph.types import Command, interrupt
 
@@ -37,7 +37,7 @@ class State(TypedDict):
     # in the annotation defines how this state key should be updated
     # (in this case, it appends messages to the list, rather than overwriting them)
     messages: Annotated[list, add_messages]
-    tool_outputs: Annotated[list, add_messages]
+    # tool_outputs: Annotated[list, add_messages]
 
 
 def route_tools(
@@ -67,6 +67,10 @@ system_prompt_text = """
     Your task is to write a unit test cases for the given ABAP class one method at a time to reduce the complexity of the task.
 
     You have access to a lot of tools to help you with your task.
+    You can use the tools to fetch the source code of the ABAP class, get the class definition, and more.
+    Once you get the Class Definition, you can analyse the code and if you see Interfaces being used, then you can use
+    the SourceCodeTool to get the source code of the Interface, to understand the methods and attributes of the Interface.
+    
     You can ask the user in case you need more information.
     """
 
@@ -88,11 +92,9 @@ llm = CiscoAzureOpenAI(
 graph_builder = StateGraph(State)
 
 os.environ["TAVILY_API_KEY"] = "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"
-tool = TavilySearchResults(max_results=2)
-tools = [tool, get_source_code]
 
 # Define the tools the chatbot will use
-# tools = [get_source_code, get_dependencies]
+tools = [TavilySearchResults(max_results=2), SourceCodeTool(), ClassDefTool()]
 
 llm_with_tools = llm.bind_tools(tools)
 
@@ -130,7 +132,7 @@ config = {"configurable": {"thread_id": "1"}}
 
 
 def token_usage():
-    print("Tokens Usage: ")
+    print("\nTokens Usage: ")
 
     # Get the current state of the graph
     snapshot = graph.get_state(config)
@@ -140,13 +142,13 @@ def token_usage():
     print(f"Input Tokens: {token_usage['prompt_tokens']}")
     print(f"Output Tokens: {token_usage['completion_tokens']}")
     print(f"Total Tokens: {token_usage['total_tokens']}")
-    print(f"Next: {snapshot.next}")
+    print(f"Next: {snapshot.next}\n")
 
     # Print stored tool outputs
-    tool_output = snapshot.values.get("tool_outputs", [])
-    print(f"Tool Outputs: {len(tool_output)}")
-    for index, tool_output in enumerate(tool_output):
-        print(f"{index + 1}. Tool: '{tool_output.name}' was called.")
+    # tool_output = snapshot.values.get("tool_outputs", [])
+    # print(f"Tool Outputs: {len(tool_output)}")
+    # for index, tool_output in enumerate(tool_output):
+    #     print(f"{index + 1}. Tool: '{tool_output.name}' was called.")
 
 def stream_graph_updates(user_input: str):
     

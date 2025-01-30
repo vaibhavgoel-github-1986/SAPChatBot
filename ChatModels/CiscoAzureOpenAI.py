@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI
-from Utilities.TokenManager import TokenManager
+from ChatModels.TokenManager import TokenManager
 from typing import Optional
 
 # Load environment variables from .env file

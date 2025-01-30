@@ -1,4 +1,4 @@
-from Tools.RemoveComments import remove_comments
+from Utilities.RemoveComments import remove_comments
 from DocumentLoaders.LoadGithubFile import load_github_files
 from langchain_core.tools import tool
 

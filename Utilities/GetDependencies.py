@@ -1,7 +1,7 @@
 import re
 from typing import Dict, List
-from Tools.GetClassSourceCode import get_class_source_code
-from Tools.RemoveComments import remove_comments
+from Utilities.GetClassSourceCode import get_class_source_code
+from Utilities.RemoveComments import remove_comments
 from langchain_core.tools import tool
 
 def extract_table_names(method_body: str) -> List[str]:

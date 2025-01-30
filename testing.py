@@ -1,5 +1,5 @@
 
-from Tools.GetDependencies import get_dependencies
+from Utilities.GetDependencies import get_dependencies
 import json
 import streamlit as st
 
