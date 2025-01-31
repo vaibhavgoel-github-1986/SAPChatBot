@@ -3,6 +3,7 @@ from Workflows.SAPAgent import get_graph
 from typing import Annotated
 from typing_extensions import TypedDict
 from langgraph.graph.message import add_messages
+import time
 
 # Global variable to store the graph
 graph = get_graph()
@@ -33,28 +34,39 @@ def add_message(role, content):
 
 # Streamed response generator using LangGraph
 def response_generator():
-    """
-    Streams responses from the chatbot graph with required config.
-    """
+    
+    # Define the configuration
     config = {"configurable": {"thread_id": "1"}}  # Required config
 
-    print("DEBUG: Calling graph.stream() with messages:", st.session_state.messages)
+    # print("DEBUG: Calling graph.stream() with messages:", st.session_state.messages)
 
-    for event in graph.stream({"messages": st.session_state.messages}, config=config):
-        print("DEBUG: Received event from graph.stream():", event)
+    with st.spinner('Processing...'):
+        for event in graph.stream(
+            {"messages": st.session_state.messages},
+            config=config,
+            # stream_mode="values",
+        ):
+            # print("DEBUG: Received event from graph.stream():", event)
 
-        # Extract response from correct path
-        if "chatbot" in event and "messages" in event["chatbot"]:
-            chatbot_messages = event["chatbot"]["messages"]
-            if chatbot_messages:
-                response = chatbot_messages[-1].content  # Extract text response
-                print("DEBUG: Extracted response:", response)
-                yield response
+            # Extract response from correct path
+            # if "messages" in event:
+            if "chatbot" in event and "messages" in event["chatbot"]:
+                chatbot_messages = event["chatbot"]["messages"]
+                # chatbot_messages = event["messages"]
+                # print("DEBUG: Event Message:", event)
+                if chatbot_messages:
+                    response = chatbot_messages[-1].content  # Extract text response
+                    # print("DEBUG: Extracted response:", response)
+                    yield response
+                else:
+                    print("DEBUG: Event: ", event)
+                    # yield "No response from the chatbot."
             else:
-                print("DEBUG: No chatbot messages found.")
-        else:
-            print("DEBUG: Unexpected event format received.")
-
+                print("DEBUG: Event: ", event)
+                # yield "Unexpected response from the chatbot."
+                
+    # st.success("Done!")
+            
 
 # Main App
 def main():
@@ -66,8 +78,14 @@ def main():
     # Display chat history
     display_chat_messages()
 
+    # add_message("assistant", "Hi! I'm the SAP Chat Bot. How can I help you today?")
+    
+    # # Generate assistant response
+    # with st.chat_message("assistant"):
+    #     response_generator()
+            
     # Accept user input
-    if prompt := st.chat_input("What can I help with?"):
+    if prompt := st.chat_input("Hello! How can I help?"):
         # Add user message to chat history
         add_message("user", prompt)
 

@@ -1,3 +1,4 @@
+langgraph
 streamlit
 langchain_openai
 requests
@@ -5,7 +6,6 @@ python-dotenv
 pydantic
 langchain
 typing_extensions
-langgraph
 langsmith
 tavily-python 
 langchain_community
