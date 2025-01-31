@@ -30,11 +30,11 @@ class CiscoAzureOpenAI:
             token_manager (TokenManager): An instance of the TokenManager for handling tokens. Must be provided.
         """
 
-        self.deployment_name = deployment_name or st.secrets("AZURE_DEPLOYMENT_NAME") 
-        self.azure_endpoint = azure_endpoint or st.secrets("AZURE_ENDPOINT")
-        self.api_version = api_version or st.secrets("AZURE_API_VERSION")
-        self.app_key = app_key or st.secrets("CISCO_APP_KEY")
-        self.user_id = user_id or st.secrets("CISCO_USER_ID")
+        self.deployment_name = deployment_name or st.secrets["AZURE_DEPLOYMENT_NAME"] 
+        self.azure_endpoint = azure_endpoint or st.secrets["AZURE_ENDPOINT"]
+        self.api_version = api_version or st.secrets["AZURE_API_VERSION"]
+        self.app_key = app_key or st.secrets["CISCO_APP_KEY"]
+        self.user_id = user_id or st.secrets["CISCO_USER_ID"]
         self.token_manager = token_manager
 
         if not all(

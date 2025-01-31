@@ -20,7 +20,7 @@ class GitHubLoader:
         self,
         repo: str,
         branch: str = "main",
-        github_token: str = st.secrets("CISCO_GITHUB_TOKEN"),
+        github_token: str = st.secrets["CISCO_GITHUB_TOKEN"],
         github_api_url: str = "https://api.github.com",
     ):
         """
