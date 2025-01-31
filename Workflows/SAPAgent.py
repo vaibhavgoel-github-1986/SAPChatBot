@@ -8,12 +8,6 @@ import os
 from typing import Annotated
 from typing_extensions import TypedDict
 
-from langchain.chains import LLMChain
-from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate
-from langchain_core.messages import ToolMessage, trim_messages
-from langchain_core.tools import tool, ToolException, InjectedToolArg
-from langgraph.prebuilt import ToolNode, tools_condition
-
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
@@ -69,12 +63,12 @@ def route_tools(state: State):
 
 
 # Define the tools the chatbot will use
-@tool
-def human_assistance(query: str) -> str:
-    """Request assistance from a human."""
-    human_response = interrupt({"query": query})
-    # return str(human_response)
-    return human_response["data"]
+# @tool
+# def human_assistance(query: str) -> str:
+#     """Request assistance from a human."""
+#     human_response = interrupt({"query": query})
+#     # return str(human_response)
+#     return human_response["data"]
 
 
 # Get the LLM Chat Model
