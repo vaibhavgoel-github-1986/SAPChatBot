@@ -1,5 +1,5 @@
 import streamlit as st
-from Workflows.SAPAgent import get_graph
+from .Workflows.SAPAgent import get_graph
 from typing import Annotated
 from typing_extensions import TypedDict
 from langgraph.graph.message import add_messages
@@ -77,12 +77,6 @@ def main():
 
     # Display chat history
     display_chat_messages()
-
-    # add_message("assistant", "Hi! I'm the SAP Chat Bot. How can I help you today?")
-    
-    # # Generate assistant response
-    # with st.chat_message("assistant"):
-    #     response_generator()
             
     # Accept user input
     if prompt := st.chat_input("Hello! How can I help?"):
