@@ -4,6 +4,7 @@ from typing import List, Optional, Callable
 from dotenv import load_dotenv
 from langchain_community.document_loaders import GithubFileLoader
 from langchain.schema import Document
+import streamlit as st
 
 # Load environment variables from .env file
 load_dotenv()
@@ -11,7 +12,7 @@ load_dotenv()
 def load_github_files(
     repo: str,
     branch: str = "main",
-    github_token: str = os.getenv("CISCO_GITHUB_TOKEN"),
+    github_token: str = st.secrets("CISCO_GITHUB_TOKEN"),
     github_api_url: str = "https://api.github.com",
     file_filter: Optional[Callable[[str], bool]] = None,
 ) -> List[Document]:

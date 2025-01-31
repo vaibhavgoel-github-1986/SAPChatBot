@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI
 from ChatModels.TokenManager import TokenManager
 from typing import Optional
+import streamlit as st
 
 # Load environment variables from .env file
 load_dotenv()
@@ -29,11 +30,11 @@ class CiscoAzureOpenAI:
             token_manager (TokenManager): An instance of the TokenManager for handling tokens. Must be provided.
         """
 
-        self.deployment_name = deployment_name or os.getenv("AZURE_DEPLOYMENT_NAME")
-        self.azure_endpoint = azure_endpoint or os.getenv("AZURE_ENDPOINT")
-        self.api_version = api_version or os.getenv("AZURE_API_VERSION")
-        self.app_key = app_key or os.getenv("CISCO_APP_KEY")
-        self.user_id = user_id or os.getenv("CISCO_USER_ID")
+        self.deployment_name = deployment_name or st.secrets("AZURE_DEPLOYMENT_NAME") 
+        self.azure_endpoint = azure_endpoint or st.secrets("AZURE_ENDPOINT")
+        self.api_version = api_version or st.secrets("AZURE_API_VERSION")
+        self.app_key = app_key or st.secrets("CISCO_APP_KEY")
+        self.user_id = user_id or st.secrets("CISCO_USER_ID")
         self.token_manager = token_manager
 
         if not all(

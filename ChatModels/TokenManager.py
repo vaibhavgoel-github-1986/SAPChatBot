@@ -4,6 +4,7 @@ import base64
 import traceback
 import os
 from typing import Optional
+import streamlit as st
 
 # Load environment variables from a .env file if present
 load_dotenv()
@@ -24,9 +25,9 @@ class TokenManager:
             token_url (str): The URL for token generation. Defaults to the value from the environment variable `CISCO_TOKEN_URL`.
         """
 
-        self.client_id = client_id or os.getenv("CISCO_CLIENT_ID")
-        self.client_secret = client_secret or os.getenv("CISCO_CLIENT_SECRET")
-        self.token_url = token_url or os.getenv("CISCO_TOKEN_URL")
+        self.client_id = client_id or st.secrets("CISCO_CLIENT_ID")
+        self.client_secret = client_secret or st.secrets("CISCO_CLIENT_SECRET")
+        self.token_url = token_url or st.secrets("CISCO_TOKEN_URL")
         self.token = None
 
         # Validate that all required fields are present
