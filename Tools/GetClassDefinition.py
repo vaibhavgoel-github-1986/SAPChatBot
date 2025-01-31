@@ -14,7 +14,7 @@ class ClassDefinitionInput(BaseModel):
     )
 
 
-class ClassDefTool(BaseTool):  # type: ignore[override, override]
+class GetClassDefinition(BaseTool):  # type: ignore[override, override]
     """Tool that fetches the class definition and method signatures from a specified ABAP Class."""
 
     name: str = "get_class_definition"
@@ -25,12 +25,12 @@ class ClassDefTool(BaseTool):  # type: ignore[override, override]
     response_format: str = "content_and_artifact"
     return_direct: bool = False
 
-    def _run(self, **kwargs) -> str:
+    def _run(self, **kwargs) -> Tuple[str, str]:
         """
         Fetches the class definition and method signatures from an ABAP Class.
         Removes TYPES, DATA, CONSTANTS, and other non-essential parts.
         """
-        
+
         # Retrieve class name from input
         class_name = kwargs.get("class_name")
 

@@ -19,16 +19,26 @@ from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
 
 import sys
+
 # sys.path.append('/Users/vaibhago/Documents/SAPChatBot')
 
 from ChatModels.CiscoAzureOpenAI import CiscoAzureOpenAI
+from Prompts.SystemPrompts import get_sap_agent_prompt
 from SequentialAgents.BasicToolNode import BasicToolNode
-from ChatModels.TokenManager import TokenManager 
-from Tools.SourceCodeTool import SourceCodeTool
-from Tools.ClassDefTool import ClassDefTool
- 
+from ChatModels.TokenManager import TokenManager
+from Tools.GetInterfaceDefinition import GetInterfaceDefinition
+from Tools.GetClassDefinition import GetClassDefinition
+from Tools.GetMethodCode import GetMethodCode
+
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langgraph.types import Command, interrupt
+
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
+# Use `logger.info()`, `logger.warning()`, `logger.error()`, etc.
 
 
 # Define the state of the graph
@@ -40,41 +50,26 @@ class State(TypedDict):
     # tool_outputs: Annotated[list, add_messages]
 
 
-def route_tools(
-    state: State,
-):
+def route_tools(state: State):
     """
     Use in the conditional_edge to route to the ToolNode if the last message
     has tool calls. Otherwise, route to the end.
     """
 
-    if isinstance(state, list):
-        ai_message = state[-1]
-    elif messages := state.get("messages", []):
-        ai_message = messages[-1]
-    else:
+    messages = state.get("messages", [])
+
+    if not messages:
         raise ValueError(f"No messages found in input state to tool_edge: {state}")
-    if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
+
+    ai_message = messages[-1]  # Always get the last message
+
+    if hasattr(ai_message, "tool_calls") and ai_message.tool_calls:
         return "tools"
+
     return END
 
 
-# System prompt message
-system_prompt_text = """
-    You are an expert SAP ABAP Developer specializing in writing ABAP Unit Test Cases. 
-
-    You ar expecting user to provide you with the name of an ABAP Class. 
-    Your task is to write a unit test cases for the given ABAP class one method at a time to reduce the complexity of the task.
-
-    You have access to a lot of tools to help you with your task.
-    You can use the tools to fetch the source code of the ABAP class, get the class definition, and more.
-    Once you get the Class Definition, you can analyse the code and if you see Interfaces being used, then you can use
-    the SourceCodeTool to get the source code of the Interface, to understand the methods and attributes of the Interface.
-    
-    You can ask the user in case you need more information.
-    """
-
-
+# Define the tools the chatbot will use
 @tool
 def human_assistance(query: str) -> str:
     """Request assistance from a human."""
@@ -94,13 +89,18 @@ graph_builder = StateGraph(State)
 os.environ["TAVILY_API_KEY"] = "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"
 
 # Define the tools the chatbot will use
-tools = [TavilySearchResults(max_results=2), SourceCodeTool(), ClassDefTool()]
+tools = [
+    TavilySearchResults(max_results=2),
+    GetClassDefinition(),
+    GetInterfaceDefinition(),
+    GetMethodCode(),
+]
 
 llm_with_tools = llm.bind_tools(tools)
 
 
 def chatbot(state: State):
-    system_prompt_message = {"role": "system", "content": system_prompt_text}
+    system_prompt_message = {"role": "system", "content": get_sap_agent_prompt()}
 
     if "messages" not in state or not isinstance(state["messages"], list):
         state["messages"] = []  # Ensure messages is always a list
@@ -109,6 +109,8 @@ def chatbot(state: State):
 
     return {"messages": [llm_with_tools.invoke(messages)]}
 
+#Configurable is a dictionary that can be passed to the graph to configure the graph
+config = {"configurable": {"thread_id": "1"}}
 
 # Add the nodes to the graph
 graph_builder.add_node("chatbot", chatbot)
@@ -128,30 +130,35 @@ graph_builder.add_edge("tools", "chatbot")
 graph_builder.add_edge(START, "chatbot")
 graph = graph_builder.compile(checkpointer=memory)
 
-config = {"configurable": {"thread_id": "1"}}
-
 
 def token_usage():
     print("\nTokens Usage: ")
 
-    # Get the current state of the graph
-    snapshot = graph.get_state(config)
-    # Extract token usage details
-    token_usage = snapshot.values["messages"][-1].response_metadata["token_usage"]
-    # Print input and output tokens
-    print(f"Input Tokens: {token_usage['prompt_tokens']}")
-    print(f"Output Tokens: {token_usage['completion_tokens']}")
-    print(f"Total Tokens: {token_usage['total_tokens']}")
-    print(f"Next: {snapshot.next}\n")
+    try:
+        # Get the current state of the graph
+        snapshot = graph.get_state(config)
 
-    # Print stored tool outputs
-    # tool_output = snapshot.values.get("tool_outputs", [])
-    # print(f"Tool Outputs: {len(tool_output)}")
-    # for index, tool_output in enumerate(tool_output):
-    #     print(f"{index + 1}. Tool: '{tool_output.name}' was called.")
+        # Extract token usage details safely
+        token_usage = snapshot.values.get("messages", [])[-1].response_metadata.get(
+            "token_usage", {}
+        )
+
+        if not token_usage:
+            print("Token usage data not available.")
+            return
+
+        # Print input and output tokens
+        print(f"Input Tokens: {token_usage.get('prompt_tokens', 'N/A')}")
+        print(f"Output Tokens: {token_usage.get('completion_tokens', 'N/A')}")
+        print(f"Total Tokens: {token_usage.get('total_tokens', 'N/A')}")
+        print(f"Next: {snapshot.next}\n")
+
+    except Exception as e:
+        print(f"Error in token_usage(): {e}")
+
 
 def stream_graph_updates(user_input: str):
-    
+
     events = graph.stream(
         {"messages": [{"role": "user", "content": user_input}]},
         config,
@@ -172,23 +179,28 @@ def start_chatbot():
             if user_input.lower() in ["quit", "exit", "q"]:
                 print("Goodbye!")
                 break
-            
+
             # Stream the graph updates
             stream_graph_updates(user_input)
 
             # Print the token usage
-            token_usage()
+            # token_usage()
 
         except Exception as e:
             print(f"\nException caught in 'start_chatbot'. Error: {str(e)}")
-            break  # Stop execution if an error occurs
+            traceback.print_exc()  # Logs full error details
+            continue  # Stop execution if an error occurs
 
-
-def get_graph():
+def generate_graph_image():
     # Get the graph as a Mermaid diagram
     png_data = graph.get_graph().draw_mermaid_png()
-    with open("graph.png", "wb") as f:
-        f.write(png_data)
 
-
-
+    if png_data:
+        with open("graph.png", "wb") as f:
+            f.write(png_data)
+        print("Graph saved as graph.png")
+    else:
+        print("Failed to generate graph visualization.")
+        
+def get_graph():
+    return graph

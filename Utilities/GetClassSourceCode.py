@@ -32,3 +32,33 @@ def get_class_source_code(
     cleaned_code = remove_comments(document[0].page_content)
 
     return cleaned_code
+
+def get_interface_source_code(
+    interface_name: str,
+    repo: str = "cisco-it-finance/sap-brim-repo",
+    branch: str = "dha-main",
+):  
+    """
+    Fetches the source code of a specified ABAP interface from a GitHub repository and removes comments from it.
+    Args:
+        interface_name (str): The name of the ABAP interface whose source code is to be fetched.
+        branch (str, optional): The branch of the GitHub repository to fetch the source code from. Defaults to "dha-main".
+    Returns:
+        str: The cleaned source code of the specified ABAP interface with comments removed.
+    """
+    
+    if not interface_name:
+        raise ValueError("`interface_name` cannot be empty.")
+    
+    document = load_github_files(
+        repo=repo,
+        branch=branch,
+        file_filter=lambda file_path: file_path == f"zs4intcpq/{interface_name.lower()}.intf.abap",
+    )
+
+    if not document:
+        raise ValueError(f"Interface '{interface_name}' not found in the repository.")
+    
+    cleaned_code = remove_comments(document[0].page_content)
+
+    return cleaned_code
