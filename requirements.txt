@@ -11,3 +11,6 @@ langsmith
 tavily-python 
 langchain_community
 python-dotenv
+os
+json
+requests
