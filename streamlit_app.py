@@ -1,5 +1,5 @@
 import streamlit as st
-from .Workflows.SAPAgent import get_graph
+from Workflows.SAPAgent import get_graph
 from typing import Annotated
 from typing_extensions import TypedDict
 from langgraph.graph.message import add_messages
