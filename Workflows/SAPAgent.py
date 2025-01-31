@@ -1,7 +1,7 @@
 # main.py
 import pprint
 import traceback
-from IPython.display import Image, display
+# from IPython.display import Image, display
 import json
 import os
 
@@ -18,8 +18,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
 
-import sys
-
+# import sys
 # sys.path.append('/Users/vaibhago/Documents/SAPChatBot')
 
 from ChatModels.CiscoAzureOpenAI import CiscoAzureOpenAI
@@ -191,16 +190,16 @@ def start_chatbot():
             traceback.print_exc()  # Logs full error details
             continue  # Stop execution if an error occurs
 
-def generate_graph_image():
-    # Get the graph as a Mermaid diagram
-    png_data = graph.get_graph().draw_mermaid_png()
+# def generate_graph_image():
+#     # Get the graph as a Mermaid diagram
+#     png_data = graph.get_graph().draw_mermaid_png()
 
-    if png_data:
-        with open("graph.png", "wb") as f:
-            f.write(png_data)
-        print("Graph saved as graph.png")
-    else:
-        print("Failed to generate graph visualization.")
+#     if png_data:
+#         with open("graph.png", "wb") as f:
+#             f.write(png_data)
+#         print("Graph saved as graph.png")
+#     else:
+#         print("Failed to generate graph visualization.")
         
 def get_graph():
     return graph
