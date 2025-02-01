@@ -171,7 +171,7 @@ def add_side_bar():
         st.divider()
         
         # Reset Button
-        if st.button("🧹 Reset Chat Memory"):
+        if st.button(":material/restart_alt: Reset Chat Memory"):
             st.session_state["reset_memory"] = True  # Set flag for reset
             # Reset all the session state variables
             st.session_state.messages = []
