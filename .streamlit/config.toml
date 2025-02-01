@@ -1,0 +1,8 @@
+[server]
+# Automatically rerun script when the file is modified on disk.
+runOnSave = false
+
+[browser]
+# Whether to send usage statistics to Streamlit.
+gatherUsageStats = false
+

@@ -1,8 +1,6 @@
 from Utilities.RemoveComments import remove_comments
 from DocumentLoaders.LoadGithubFile import load_github_files
-from langchain_core.tools import tool
 
-@tool
 def get_class_source_code(
     class_name: str,
     repo: str = "cisco-it-finance/sap-brim-repo",

@@ -1,7 +1,4 @@
 import traceback
-# from IPython.display import Image, display
-import json
-import os
 
 from typing import Annotated
 from typing_extensions import TypedDict
@@ -10,34 +7,20 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
 
-# import sys
-# sys.path.append('/Users/vaibhago/Documents/SAPChatBot')
-
 from ChatModels.CiscoAzureOpenAI import CiscoAzureOpenAI
-from Prompts.SystemPrompts import get_sap_agent_prompt
+from Prompts import Prompts
 from SequentialAgents.BasicToolNode import BasicToolNode
 from ChatModels.TokenManager import TokenManager
-from Tools.GetInterfaceDefinition import GetInterfaceDefinition
+
 from Tools.GetClassDefinition import GetClassDefinition
+from Tools.GetMethodList import GetMethodList
 from Tools.GetMethodCode import GetMethodCode
-
-from langchain_community.tools.tavily_search import TavilySearchResults 
-
-import logging
-
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
-
-# Use `logger.info()`, `logger.warning()`, `logger.error()`, etc.
+from Tools.GetInterfaceDefinition import GetInterfaceDefinition
 
 
 # Define the state of the graph
 class State(TypedDict):
-    # Messages have the type "list". The `add_messages` function
-    # in the annotation defines how this state key should be updated
-    # (in this case, it appends messages to the list, rather than overwriting them)
     messages: Annotated[list, add_messages]
-    # tool_outputs: Annotated[list, add_messages]
 
 
 def route_tools(state: State):
@@ -67,62 +50,62 @@ def route_tools(state: State):
 #     # return str(human_response)
 #     return human_response["data"]
 
-
-# Get the LLM Chat Model
-llm = CiscoAzureOpenAI(
-    token_manager=TokenManager(),
-).get_llm()
-
-# Create the state graph
-graph_builder = StateGraph(State)
-
-os.environ["TAVILY_API_KEY"] = "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"
-
-# Define the tools the chatbot will use
-tools = [
-    TavilySearchResults(max_results=2),
-    GetClassDefinition(),
-    GetInterfaceDefinition(),
-    GetMethodCode(),
-]
-
-llm_with_tools = llm.bind_tools(tools)
-
-
-def chatbot(state: State):
-    system_prompt_message = {"role": "system", "content": get_sap_agent_prompt()}
-
-    if "messages" not in state or not isinstance(state["messages"], list):
-        state["messages"] = []  # Ensure messages is always a list
-
-    messages = [system_prompt_message] + state["messages"]
-
-    return {"messages": [llm_with_tools.invoke(messages)]}
-
-#Configurable is a dictionary that can be passed to the graph to configure the graph
-config = {"configurable": {"thread_id": "1"}}
-
-# Add the nodes to the graph
-graph_builder.add_node("chatbot", chatbot)
-
-# Create the tool node
-tool_node = BasicToolNode(tools=tools)
-graph_builder.add_node("tools", tool_node)
-
-# Add the conditional edges
-graph_builder.add_conditional_edges("chatbot", route_tools)
-
 # The memory saver will save the state of the graph to disk
 memory = MemorySaver()
+    
+def create_graph():
+    # Get the LLM Chat Model
+    llm = CiscoAzureOpenAI(token_manager=TokenManager()).get_llm()
 
-# Add the nodes to the graph
-graph_builder.add_edge("tools", "chatbot")
-graph_builder.add_edge(START, "chatbot")
-graph = graph_builder.compile(checkpointer=memory)
+    # Create the state graph
+    graph_builder = StateGraph(State)
+
+    # Define the tools the chatbot will use
+    tools = [
+        GetMethodList(),
+        GetClassDefinition(),
+        GetInterfaceDefinition(),
+        GetMethodCode(),
+    ]
+
+    llm_with_tools = llm.bind_tools(tools)
+
+    def chatbot(state: State):
+        system_prompt_message = {"role": "system", "content": Prompts.system_prompt}
+
+        if "messages" not in state or not isinstance(state["messages"], list):
+            state["messages"] = []
+
+        messages = [system_prompt_message] + state["messages"]
+        return {"messages": [llm_with_tools.invoke(messages)]}
+
+    # Add the nodes to the graph
+    graph_builder.add_node("chatbot", chatbot)
+
+    # Create the tool node
+    tool_node = BasicToolNode(tools=tools)
+    graph_builder.add_node("tools", tool_node)
+
+    # Add the conditional edges
+    graph_builder.add_conditional_edges("chatbot", route_tools)
+
+    # Add the nodes to the graph
+    graph_builder.add_edge("tools", "chatbot")
+    graph_builder.add_edge(START, "chatbot")
+    graph = graph_builder.compile(checkpointer=memory)
+
+    return graph
+
+
+def get_graph():
+    return create_graph()
 
 
 def token_usage():
     print("\nTokens Usage: ")
+
+    graph = get_graph()
+    config = {"configurable": {"thread_id": "1"}}
 
     try:
         # Get the current state of the graph
@@ -149,6 +132,11 @@ def token_usage():
 
 def stream_graph_updates(user_input: str):
 
+    graph = get_graph()
+
+    # Configurable is a dictionary that can be passed to the graph to configure the graph
+    config = {"configurable": {"thread_id": "1"}}
+
     events = graph.stream(
         {"messages": [{"role": "user", "content": user_input}]},
         config,
@@ -156,6 +144,8 @@ def stream_graph_updates(user_input: str):
     )
 
     for event in events:
+        print(event)
+        print("\n")
         if "messages" in event and event["messages"]:
             event["messages"][-1].pretty_print()
         else:
@@ -181,6 +171,7 @@ def start_chatbot():
             traceback.print_exc()  # Logs full error details
             continue  # Stop execution if an error occurs
 
+
 # def generate_graph_image():
 #     # Get the graph as a Mermaid diagram
 #     png_data = graph.get_graph().draw_mermaid_png()
@@ -191,6 +182,3 @@ def start_chatbot():
 #         print("Graph saved as graph.png")
 #     else:
 #         print("Failed to generate graph visualization.")
-        
-def get_graph():
-    return graph
