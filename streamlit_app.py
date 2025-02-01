@@ -100,6 +100,8 @@ def initial_greeting():
         with st.chat_message("assistant"):
             st.markdown(greeting_message)
         
+        add_message(AIMessage(content=greeting_message, role="assistant"))
+        
         # Stream AI-generated greeting inside chat_message block
         # with st.chat_message("assistant"):  # Ensures the bot icon appears
         #     response_container = st.empty()

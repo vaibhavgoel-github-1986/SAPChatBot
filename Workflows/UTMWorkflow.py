@@ -19,6 +19,7 @@ from Tools.GetInterfaceDefinition import GetInterfaceDefinition
 
 
 # Define the state of the graph
+
 class State(TypedDict):
     messages: Annotated[list, add_messages]
 
