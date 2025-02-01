@@ -22,7 +22,12 @@ from Tools.GetInterfaceDefinition import GetInterfaceDefinition
 class State(TypedDict):
     messages: Annotated[list, add_messages]
 
-
+def clear_memory():
+    """Clears the saved memory state."""
+    global memory  # Access the global memory instance
+    memory = MemorySaver()  # Reinitialize to clear past states
+    print("🔄 Memory cleared successfully!")
+    
 def route_tools(state: State):
     """
     Use in the conditional_edge to route to the ToolNode if the last message
@@ -97,7 +102,11 @@ def create_graph():
     return graph
 
 
-def get_graph():
+def get_graph(reset_memory=False):
+    """Returns a LangGraph instance, resetting memory if requested."""
+    global memory
+    if reset_memory:
+        clear_memory()  # ✅ Reset memory before returning the graph
     return create_graph()
 
 

@@ -1,5 +1,6 @@
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+from langgraph.checkpoint.memory import MemorySaver
 
 from Workflows.UTMWorkflow import get_graph
 
@@ -10,8 +11,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Get the graph
-graph = get_graph()
+# Check if reset flag is set
+reset_memory = st.session_state.pop("reset_memory", False)
+graph = get_graph(reset_memory=reset_memory)  # ✅ Reset memory only if button was clicked
+
 
 # Initialize session state variables only if they are not already set
 if "total_token_usage" not in st.session_state:
@@ -39,7 +42,7 @@ def display_chat_messages():
     for message in st.session_state.messages:
         with st.chat_message(message.role):
             st.markdown(message.content)
-
+    
 # Get the configuration for the graph
 def get_config():
     return {"configurable": {"thread_id": "1"}}
@@ -94,31 +97,33 @@ def response_generator(role, prompt, **kwargs):
 def initial_greeting():
     if not any(msg.role == "assistant" for msg in st.session_state.messages):
         greeting_message = "Hi, I am an SAP AI Bot, designed to help you write efficient ABAP Unit Test Cases."
-
+        with st.chat_message("assistant"):
+            st.markdown(greeting_message)
+        
         # Stream AI-generated greeting inside chat_message block
-        with st.chat_message("assistant"):  # Ensures the bot icon appears
-            response_container = st.empty()
-            response_lines = []
+        # with st.chat_message("assistant"):  # Ensures the bot icon appears
+        #     response_container = st.empty()
+        #     response_lines = []
 
-            for line in response_generator(
-                "assistant",
-                greeting_message,
-                display_logs_flag=st.session_state.display_logs_flag,
-            ):
-                response_lines.append(line)
-                response_container.markdown("  \n\n".join(response_lines))
+        #     for line in response_generator(
+        #         "assistant",
+        #         greeting_message,
+        #         display_logs_flag=st.session_state.display_logs_flag,
+        #     ):
+        #         response_lines.append(line)
+        #         response_container.markdown("  \n\n".join(response_lines))
 
-            # Store AI response in session state (prevents re-generation)
-            final_response = "  \n\n".join(response_lines)
+        #     # Store AI response in session state (prevents re-generation)
+        #     final_response = "  \n\n".join(response_lines)
 
-            # Store AI response
-            add_message(AIMessage(content=final_response, role="assistant"))
+        #     # Store AI response
+        #     add_message(AIMessage(content=final_response, role="assistant"))
 
-            # Set the initial tokens consumed
-            set_last_token_usage(get_total_token_usage())
+        #     # Set the initial tokens consumed
+        #     set_last_token_usage(get_total_token_usage())
             
-            # Update token usage                        
-            update_token_usage()
+        #     # Update token usage                        
+        #     update_token_usage()
             
 def get_total_token_usage():
     # Fetches token usage statistics from the graph state.
@@ -160,6 +165,20 @@ def add_side_bar():
             border=False,
         )
         
+        # Add a divider
+        st.divider()
+        
+        # Reset Button
+        if st.button("🧹 Reset Chat Memory"):
+            st.session_state["reset_memory"] = True  # Set flag for reset
+            # Reset all the session state variables
+            st.session_state.messages = []
+            st.session_state.total_token_usage = 0
+            st.session_state.last_token_usage = 0
+            st.session_state.display_logs_flag = False
+            st.rerun()  # Refresh Streamlit page
+
+            
 # Main App
 def main():
 
