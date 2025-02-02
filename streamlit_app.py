@@ -1,6 +1,7 @@
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langgraph.checkpoint.memory import MemorySaver
+from Prompts import GreetingMsg
 
 from Workflows.UTMWorkflow import get_graph
 
@@ -8,7 +9,7 @@ from Workflows.UTMWorkflow import get_graph
 st.set_page_config(
     page_title="SAP ChatBot",
     layout="centered",  # "wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # Check if reset flag is set
@@ -96,36 +97,11 @@ def response_generator(role, prompt, **kwargs):
 
 def initial_greeting():
     if not any(msg.role == "assistant" for msg in st.session_state.messages):
-        greeting_message = "Hi, I am an SAP AI Bot, designed to help you write efficient ABAP Unit Test Cases."
+
         with st.chat_message("assistant"):
-            st.markdown(greeting_message)
+            st.markdown(GreetingMsg.greeting_msg)
         
-        add_message(AIMessage(content=greeting_message, role="assistant"))
-        
-        # Stream AI-generated greeting inside chat_message block
-        # with st.chat_message("assistant"):  # Ensures the bot icon appears
-        #     response_container = st.empty()
-        #     response_lines = []
-
-        #     for line in response_generator(
-        #         "assistant",
-        #         greeting_message,
-        #         display_logs_flag=st.session_state.display_logs_flag,
-        #     ):
-        #         response_lines.append(line)
-        #         response_container.markdown("  \n\n".join(response_lines))
-
-        #     # Store AI response in session state (prevents re-generation)
-        #     final_response = "  \n\n".join(response_lines)
-
-        #     # Store AI response
-        #     add_message(AIMessage(content=final_response, role="assistant"))
-
-        #     # Set the initial tokens consumed
-        #     set_last_token_usage(get_total_token_usage())
-            
-        #     # Update token usage                        
-        #     update_token_usage()
+        add_message(AIMessage(content=GreetingMsg.greeting_msg, role="assistant"))
             
 def get_total_token_usage():
     # Fetches token usage statistics from the graph state.

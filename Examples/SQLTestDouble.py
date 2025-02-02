@@ -1,0 +1,124 @@
+
+sql_test_double_examples= """
+This example will help you understand more on how to mock database tables and cds views, and 
+to simulate the behavior of the database system in your unit tests.
+
+An ABAP SQL statement depends on one or more data sources. A data source can be a table, a view, 
+a CDS view, a CDS table function, a CDS view entities, a CDS projection view or an external view.
+
+Lets this is the ABAP class that you want to test:
+
+CLASS zcl_order IMPLEMENTATION.
+    METHOD get_amount.
+        SELECT *
+         FROM demo_new_orders_with_items AS orders
+            INNER JOIN demo_prod_prices AS prices 
+             ON orders~product_id = prices~product_id
+        INTO TABLE @DATA(lt_entries).
+
+        ev_result = lt_entries[ 1 ]-prices-amount * entries[ 1 ]-orders-quantity.
+    ENDMETHOD.
+ENDCLASS.
+
+You can write a unit test for the above class using ABAP SQL Test Double Framework as shown below:
+
+CLASS ltc_item_amount DEFINITION FINAL FOR TESTING 
+    DURATION SHORT RISK LEVEL HARMLESS.
+
+    PRIVATE SECTION.
+      
+        CLASS-DATA: go_osql_test_double TYPE REF TO if_osql_test_environment.  "SQL Test Double Framework
+        DATA: go_cut TYPE REF TO zcl_order.  "Class under test
+
+    METHODS:
+        setup,
+        teardown,
+        
+        "Positive UTMs for get_amount method
+        test_calculate_amount FOR TESTING.
+        
+
+ENDCLASS.
+
+CLASS ltc_item_amount IMPLEMENTATION.
+
+    METHOD setup.
+      " Create SQL Test Doubles for required tables
+        go_osql_test_double = cl_osql_test_environment=>create(
+                                i_dependency_list = VALUE #( ( 'demo_new_orders_with_items' )
+                                                             ( 'demo_prod_prices'   ) ) ).
+      " Initialize the class under test  
+        go_cut = NEW zcl_order( ).
+    ENDMETHOD.
+
+    METHOD teardown.
+      " Destroy test environment after test execution
+         go_osql_test_double->destroy( ).
+    ENDMETHOD.
+
+    METHOD test_calculate_amount.
+                                
+     " Declare data variables
+        DATA lt_orders TYPE STANDARD TABLE OF demo_new_orders_with_items.
+        DATA lt_prices TYPE STANDARD TABLE OF demo_prod_prices.
+        DATA lv_amount TYPE dsag_amount.
+             
+     " Insert mock test data                               
+        lt_orders = VALUE #( ( product_id = 'TK' quantity = 5 status = 'new' ) ).
+        lt_prices = VALUE #( ( product_id = 'TK' amount = '11.00' ) ).
+                                    
+        go_osql_test_double->insert_test_data( orders ).
+        go_osql_test_double->insert_test_data( prices ).
+                                    
+     " Call method under test
+        lv_amount = cl_znl_item_amount=>get_amount( ).
+                                    
+     " Verify result
+        cl_abap_unit_assert=>assert_equals( act = lv_amount exp = '55.00' msg = 'Amount calculated is incorrect').
+                                
+    ENDMETHOD.
+
+ENDCLASS.
+
+**Other types of the data source:**
+1. Dependent component is a CDS view with parameters
+
+    If the dependent component is a CDS view with parameters, set the test data for CDS parameter 
+    fields while also providing the test data for normal fields.
+
+    Code Sample:
+        DATA lt_parameters TYPE if_osql_param_values_config=>ty_parameter_value_pairs.
+        
+        lt_parameters = VALUE #( ( parameter_name = 'p_status' parameter_value = 'some_param_value' ) ).
+        ...
+        go_osql_test_double->insert_test_data( i_data = lt_orders i_parameter_values = lt_parameters ).
+
+2. Dependent component is a table function
+    Doubles of the type Table Functions are handled in the same manner as any CDS view.
+
+3. Dependent component is a projection view
+    If the dependent on component is a projection view, you can pass the projection view name as part of the i_dependency_list parameter.
+
+4. NULL values 
+    NULL values can be inserted explicitly in the double fields as follows:
+
+    Code Sample:
+        DATA lv_currency_is_null TYPE if_osql_null_values_config=>ty_element_names.
+        lv_currency_is_null = VALUE #( ( `currency` ) ).
+        ...
+        go_osql_test_double->insert_test_data( i_data = lt_prices i_null_values = lv_currency_is_null ).
+
+
+**Important Considerations**
+1. Provide Proper Test Data:
+    Ensure that test data includes all key fields to avoid framework exceptions.
+    Data must be representative of real-world scenarios to validate business logic properly.
+2. Mocking Database Dependencies:
+    The ABAP SQL Test Double Framework replaces all database calls with test doubles.
+    This ensures that test data is fetched from mocked tables instead of real database artifacts.
+3. Ensuring Test Isolation:
+    The setup method initializes the test environment before each test execution.
+4. Write Access
+    If the dependent object is a database table, both read and write accesses are redirected to the test double table.
+
+"""

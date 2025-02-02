@@ -1,0 +1,85 @@
+auth_check_controller_examples = """
+Managing Dependencies on ABAP Authority Checks with ABAP Unit
+Overview
+The ABAP Authority Check Test Helper API provides an API-based approach to configure single or multiple users with authorizations in the test environment.
+
+Challenges with Authority Checks
+Limited support for testing AUTHORITY-CHECK statements in ABAP.
+Complex configuration of user roles and authorizations.
+Difficult setup for user roles in single and multi-user environments.
+Central test runs execute with SAP_ALL authorizations, bypassing real user access restrictions.
+Running tests with limited rights via RFC is cumbersome.
+
+Solution
+The API enables handling test authorizations using authorization objects, encapsulating user access and ensuring role-based tests.
+
+Key Features
+✔ Encapsulated Security: Handler classes ensure safe test execution.
+✔ Supports AUTHORITY-CHECK (FOR USER variant).
+✔ Expectation Handling: Define positive, negative, or mixed expectations.
+✔ Assertions & Logging: Validate and log test execution results.
+✔ Pass/Fail Reporting: Identify deviations from expected outcomes.
+
+Usage Examples
+1. Creating an Authorization Object Set
+DATA lt_role_may_display TYPE cl_aunit_auth_check_types_def=>role_auth_objects.
+DATA lt_user_role_auth   TYPE cl_aunit_auth_check_types_def=>user_role_authorizations.
+
+lt_role_may_display = VALUE #( 
+    ( object = 'S_DEVELOP'
+      authorizations = VALUE #( 
+          ( VALUE #( ( fieldname   = 'ACTVT'
+                      fieldvalues  = VALUE #( ( lower_value = '03' ) ) ) ) ) ) 
+    ) ).
+
+lt_user_role_auth = VALUE #( ( role_authorizations = lt_role_may_display ) ).
+
+DATA(go_auth_objset_with_disp_auth) = cl_aunit_authority_check=>create_auth_object_set( lt_user_role_auth ).
+2. Restricting Authorizations for Test Users
+DATA(go_auth_controller) = cl_aunit_authority_check=>get_controller( ).
+
+" Apply restricted authorizations for test session
+go_auth_controller->restrict_authorizations_to( go_auth_objset_with_disp_auth ).
+3. Setting Positive and Negative Test Expectations
+abap
+Copy
+Edit
+go_auth_controller->authorizations_expected_to(
+      EXPORTING
+         pass_execution = go_auth_objset_with_disp_auth
+         fail_execution = go_auth_objset_with_create_auth
+    ).
+4. Evaluating Test Executions
+DATA lt_failed_expectations TYPE cl_aunit_auth_check_types_def=>auth_ctxtset_msgs.
+
+" Assert configured expectations
+go_auth_controller->assert_expectations( ).
+
+" Check expectations and capture failures
+DATA(lv_check_passed) = go_auth_controller->check_expectations(
+                                        IMPORTING
+                                          failed_expectations = lt_failed_expectations
+                                       ).
+5. Logging Execution Results
+go_auth_controller->get_auth_check_execution_log( )->get_execution_status(
+    IMPORTING
+      passed_execution = DATA(lt_passed_execution)
+      failed_execution = DATA(lt_failed_execution)
+).
+
+" Fetch expectation deviations
+go_auth_controller->get_auth_check_execution_log( )->get_failed_expectations(
+    IMPORTING
+      expected_to_pass_but_failed   = DATA(lt_expected_to_pass_but_failed)
+      expected_to_fail_but_passed   = DATA(lt_expected_to_fail_but_passed)
+      expected_to_pass_not_executed = DATA(lt_expected_to_pass_not_executed)         
+      expected_to_fail_not_executed = DATA(lt_expected_to_fail_not_executed)
+).
+
+" Fetch unexpected authorizations
+go_auth_controller->get_auth_check_execution_log( )->get_unexpected_executions(
+    IMPORTING
+      passed_but_not_expected = DATA(lt_passed_but_not_expected)
+      failed_but_not_expected = DATA(lt_failed_but_not_expected)
+).
+"""

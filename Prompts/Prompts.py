@@ -33,12 +33,7 @@ Do not answer any other queries. Only focus on generating unit test cases for AB
     a. For example: Test Double Frameworks required: SQL Test Double Framework, CDS Test Double Framework, etc.
     b. Identify dependencies requiring test doubles 
 
-6.	Retrieve Test Double Examples (if needed)
-    a. If dependencies require mock objects, use ‘get_relevant_examples’ to fetch relevant examples for:
-        • ABAP OO Test Doubles (ooabap)
-        • SQL Test Double Framework (TDF) (sql) 
-        • CDS Test Double Framework (TDF) (cds)
-        • Function Module Test Double Framework (func)
+
 
 Best Practices:
     • If the class interacts with database tables, retrieve schema details and sample records for realistic test data

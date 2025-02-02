@@ -1,22 +1,33 @@
 /* For Adding a Border */
-.st-emotion-cache-8atqhb { 
+.st-emotion-cache-8atqhb {
     border: 1px solid #bab8b8;
     border-radius: 10px;
     padding: 10px 10px 10px 10px;
 }
 
 /* For Caption Text */
-.st-emotion-cache-eglv7c { 
-    font-size: 16px; 
-    opacity: 0.8; 
+.st-emotion-cache-eglv7c {
+    font-size: 16px;
+    opacity: 0.8;
 }
 
 /* For Toggle Button Text */
-.st-emotion-cache-4tlk2p { 
-    font-size: 14px; 
+.st-emotion-cache-4tlk2p {
+    font-size: 14px;
 }
 
 /* For the Dividers */
 .st-emotion-cache-1mw54nq {
     font-size: 2px;
+}
+
+/* For Human Icon */
+.st-emotion-cache-1ghhuty {
+    background-color: rgb(20 164 64 / 80%);
+    box-shadow: 4px 5px 8px 1px rgb(0 0 0 / 16%);
+}
+
+/* For Bot Icon */
+.st-emotion-cache-bho8sy {
+    box-shadow: 3px 2px 5px 1px rgb(0 0 0 / 19%);
 }
