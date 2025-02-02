@@ -12,18 +12,10 @@ from Prompts import Prompts
 from SequentialAgents.BasicToolNode import BasicToolNode
 from ChatModels.TokenManager import TokenManager
 
-from Tools import (
-    GetTableSchema,
-    GetClassDefinition,
-    GetMethodList,
-    GetMethodCode,
-    GetInterfaceDefinition,
-)
+from Workflows.Tools import tools
 
 
 # Define the state of the graph
-
-
 class State(TypedDict):
     messages: Annotated[list, add_messages]
 
@@ -72,15 +64,6 @@ def create_graph():
 
     # Create the state graph
     graph_builder = StateGraph(State)
-
-    # Define the tools the chatbot will use
-    tools = [
-        GetMethodList(),
-        GetClassDefinition(),
-        GetInterfaceDefinition(),
-        GetMethodCode(),
-        GetTableSchema(),
-    ]
 
     llm_with_tools = llm.bind_tools(tools)
 

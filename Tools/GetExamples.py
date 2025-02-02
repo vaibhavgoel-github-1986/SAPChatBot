@@ -1,6 +1,4 @@
-from Utilities.RemoveComments import remove_comments
 from langchain_core.tools import BaseTool
-from DocumentLoaders.Github import GitHubLoader
 from typing import Type
 from pydantic import BaseModel, Field
 from pathlib import Path
@@ -39,16 +37,16 @@ class GetExamples(BaseTool):  # type: ignore[override, override]
             )
 
         # Get the absolute base directory
-        BASE_DIR = Path(__file__).resolve().parent
+        BASE_DIR = Path(__file__).resolve().parent.parent
 
         # Define file mappings with absolute paths
         file_mapping = {
-            "sql": BASE_DIR / "Examples/SQLTestDouble.py",
-            "cds": BASE_DIR / "Examples/CDSTestDouble.py",
-            "ooabap": BASE_DIR / "Examples/OO-AbapTestDouble.py",
-            "func": BASE_DIR / "Examples/FuncModuleTestDouble.py",
-            "authcheck": BASE_DIR / "Examples/AuthCheckController.py",
-            "testseams": BASE_DIR / "Examples/TestSeams.py",
+            "sql": BASE_DIR / "Examples/SQLTestDouble.txt",
+            "cds": BASE_DIR / "Examples/CDSTestDouble.txt",
+            "ooabap": BASE_DIR / "Examples/OO-AbapTestDouble.txt",
+            "func": BASE_DIR / "Examples/FuncModuleTestDouble.txt",
+            "authcheck": BASE_DIR / "Examples/AuthCheckController.txt",
+            "testseams": BASE_DIR / "Examples/TestSeams.txt",
         }
 
         # Get the file path

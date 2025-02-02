@@ -84,13 +84,16 @@ class GetTableSchema(BaseTool):  # type: ignore[override, override]
                 f"Invalid system_id: {system_id}. Allowed values: {list(system_config.keys())}"
             )
 
+        filters=""
+        
         # Construct the fieldname filter dynamically
         if isinstance(field_names, list) and field_names:
             fieldname_filter = " or ".join(
                 [f"fieldname eq '{field}'" for field in field_names]
             )
+            filters = fieldname_filter
         else:
-            fieldname_filter = ""  # Set default value if no fields provided
+            filters = "keyflag eq true"  # Fetch only the key fields
 
         hostname = system_config[system_id]["hostname"]
         sap_client = system_config[system_id]["sap_client"]
@@ -100,7 +103,7 @@ class GetTableSchema(BaseTool):  # type: ignore[override, override]
         # Construct the full API URL with filters
         url = (
             f"{base_url}?"
-            f"$filter=(tableName eq '{table_name}' and ({fieldname_filter}))"
+            f"$filter=(tableName eq '{table_name}' and ({filters}))"
             f"&sap-client={sap_client}"
         )
 

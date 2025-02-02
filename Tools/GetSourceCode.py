@@ -25,7 +25,7 @@ class SourceCodeInput(BaseModel):
     )
 
 
-class SourceCodeTool(BaseTool): # type: ignore[override, override]
+class GetSourceCode(BaseTool): # type: ignore[override, override]
     """Tool for fetching and cleaning ABAP object source code from a GitHub repository."""
 
     name: str = "get_source_code"
