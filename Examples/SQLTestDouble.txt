@@ -1,5 +1,4 @@
 
-sql_test_double_examples= """
 This example will help you understand more on how to mock database tables and cds views, and 
 to simulate the behavior of the database system in your unit tests.
 
@@ -120,5 +119,3 @@ ENDCLASS.
     The setup method initializes the test environment before each test execution.
 4. Write Access
     If the dependent object is a database table, both read and write accesses are redirected to the test double table.
-
-"""

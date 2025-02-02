@@ -1,4 +1,3 @@
-func_module_test_double_examples = """
 # Testing with Function Module Test Doubles
 
 This example demonstrates how to use a test double framework for function modules in ABAP unit tests.  Using test doubles allows us to isolate our code under test (CUT) from external dependencies, such as function modules, making tests more reliable and easier to manage.
@@ -124,4 +123,3 @@ verify()->is_called_times(2) asserts that the test double was called two times (
 
 verify(go_conv_curr_input_config_1)->is_called_once() asserts that the test double was called exactly once with the input parameters specified in go_conv_curr_input_config_1.
 
-"""

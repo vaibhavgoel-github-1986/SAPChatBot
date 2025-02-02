@@ -12,23 +12,29 @@ from Prompts import Prompts
 from SequentialAgents.BasicToolNode import BasicToolNode
 from ChatModels.TokenManager import TokenManager
 
-from Tools.GetClassDefinition import GetClassDefinition
-from Tools.GetMethodList import GetMethodList
-from Tools.GetMethodCode import GetMethodCode
-from Tools.GetInterfaceDefinition import GetInterfaceDefinition
+from Tools import (
+    GetTableSchema,
+    GetClassDefinition,
+    GetMethodList,
+    GetMethodCode,
+    GetInterfaceDefinition,
+)
 
 
 # Define the state of the graph
 
+
 class State(TypedDict):
     messages: Annotated[list, add_messages]
+
 
 def clear_memory():
     """Clears the saved memory state."""
     global memory  # Access the global memory instance
     memory = MemorySaver()  # Reinitialize to clear past states
     print("🔄 Memory cleared successfully!")
-    
+
+
 def route_tools(state: State):
     """
     Use in the conditional_edge to route to the ToolNode if the last message
@@ -58,7 +64,8 @@ def route_tools(state: State):
 
 # The memory saver will save the state of the graph to disk
 memory = MemorySaver()
-    
+
+
 def create_graph():
     # Get the LLM Chat Model
     llm = CiscoAzureOpenAI(token_manager=TokenManager()).get_llm()
@@ -72,6 +79,7 @@ def create_graph():
         GetClassDefinition(),
         GetInterfaceDefinition(),
         GetMethodCode(),
+        GetTableSchema(),
     ]
 
     llm_with_tools = llm.bind_tools(tools)

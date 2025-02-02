@@ -1,4 +1,3 @@
-cds_test_double_examples="""
 Writing a Unit Test for a CDS Entity Using the CDS Test Double Framework
 Key Concepts
 ✔ CDS Test Doubles: Generated for first-level dependencies of the CDS entity under test (CUT).
@@ -126,4 +125,3 @@ METHOD class_setup.
   " Test double created for 'zcds_Sales_Order_Item'.
   " Unit testing for 'I_BUSINESSUSER'.
 ENDMETHOD.
-"""

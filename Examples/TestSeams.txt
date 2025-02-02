@@ -1,5 +1,3 @@
-test_seams_examples = """
-
 Test seams are language constructs designed especially for unit tests and are implemented using the following statements:
 
 TEST-SEAM - END-TEST-SEAM
@@ -92,5 +90,3 @@ Test injections can only refer to test seams located in the same function pool.
 You cannot use test seams in reports.
 
 Code completion in test injections is available to a limited extent.
-
-"""

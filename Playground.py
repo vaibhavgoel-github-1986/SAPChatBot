@@ -1,44 +1,84 @@
-import json
 import pprint
-from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
-import streamlit as st
-import re
-from Utilities.GetClassSourceCode import get_class_source_code
+import requests
+from requests.auth import HTTPBasicAuth
 
-# Retrieve class name from input
-class_name = "zcl_som_i017a_reminder_notif" #"zcl_cc_rate_plan"
+class SAPTableSchemaFetcher:
+    """
+    A class to fetch schema details of an SAP table from OData V4.
+    """
 
-# Retrieve class source code
-class_source_code = get_class_source_code(class_name)
-
-if not class_source_code:
-    raise ValueError(
-        f"Class '{class_name}' not found or source code retrieval failed."
-    )
-
-# Apply regex to extract the class definition only
-class_impl_pattern = re.compile(
-    r"(?i)class\s+\w+\s+implementation.*?endclass\.", re.IGNORECASE | re.DOTALL
-)
-class_impl_code = class_impl_pattern.search(class_source_code)
-
-if not class_impl_code:
-    raise ValueError(
-        f"Class Implementation not found in source code for '{class_name}'."
-    )
-
-# Extract methods
-# method_pattern = re.compile(
-#     r"\bmethod\s+\w+\s+.*?endmethod\.", re.IGNORECASE | re.DOTALL
-# )
-
-# method_pattern = re.compile(r"\bMETHOD\s+([\w~]+)\b", re.IGNORECASE)
-method_pattern = re.compile(r"^\s*METHOD\s+([\w~]+)\s*\.", re.IGNORECASE | re.MULTILINE)
-
-
-methods = method_pattern.findall(class_impl_code.group(0))
-
-pprint.pprint(methods)
- 
+    def __init__(self, hostname: str, username: str, password: str, sap_client: str = "300"):
+        """
+        Initialize API connection settings.
         
+        :param hostname: SAP OData service base URL.
+        :param username: SAP username.
+        :param password: SAP password.
+        :param sap_client: SAP client ID (default is '300').
+        """
+        self.hostname = hostname
+        self.username = username
+        self.password = password
+        self.sap_client = sap_client
+        self.base_url = f"{self.hostname}/sap/opu/odata4/sap/zsb_table_schema/srvd_a2x/sap/zsd_table_schema/0001/TabFields"
 
+    def get_table_fields(self, table_name: str, field_names: list):
+        """
+        Fetch specific fields for a given SAP table.
+
+        :param table_name: SAP table name.
+        :param field_names: List of field names to filter.
+        :return: JSON response containing selected table fields.
+        """
+        if not field_names:
+            raise ValueError("Field names list cannot be empty!")
+
+        # Construct the fieldname filter dynamically
+        fieldname_filter = " or ".join([f"fieldname eq '{field}'" for field in field_names])
+
+        # Construct the full API URL with filters
+        url = (
+            f"{self.base_url}?"
+            f"$filter=(tableName eq '{table_name}' and ({fieldname_filter}))" 
+            f"&sap-client={self.sap_client}"
+        )
+
+        try:
+            # Make the request with authentication
+            response = requests.get(url, auth=HTTPBasicAuth(self.username, self.password), timeout=10)
+
+            # Check for successful response
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise Exception(f"Error: {response.status_code} - {response.reason}")
+
+        except requests.exceptions.RequestException as error:
+            print(f"Error fetching table fields: {error}")
+            return None
+
+    def fetch_and_print_fields(self, table_name: str, field_names: list):
+        """
+        Fetches and prints the filtered fields for a table.
+
+        :param table_name: SAP table name.
+        :param field_names: List of field names to filter.
+        """
+        schema = self.get_table_fields(table_name, field_names)
+        if schema:
+            pprint.pprint(schema)
+        else:
+            pprint.pprint("Failed to fetch fields.")
+
+# Usage Example
+if __name__ == "__main__":
+    fetcher = SAPTableSchemaFetcher(
+        hostname="https://saphec-preprod.cisco.com:44300",
+        username="vaibhago",
+        password="Aichusiddhu123$$"
+    )
+
+    table_name = "ZDT_SOM_HEADCUST"
+    field_names = ["MANDT", "REFOBJKEY"]
+    
+    fetcher.fetch_and_print_fields(table_name, field_names)

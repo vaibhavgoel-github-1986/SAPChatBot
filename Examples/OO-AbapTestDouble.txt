@@ -1,4 +1,3 @@
-oo_abap_test_double_examples="""
 ABAP Unit supports object-oriented test doubles to replace depended-on components (DOCs) in unit tests. 
 This allows testing the object under test (OUT) in isolation without external dependencies.
 
@@ -239,5 +238,3 @@ Framework Restrictions (Not Supported):
 🚫 FINAL or FOR TESTING classes
 🚫 PRIVATE constructor classes
 🚫 Methods marked as FINAL, STATIC, or PRIVATE
-
-"""

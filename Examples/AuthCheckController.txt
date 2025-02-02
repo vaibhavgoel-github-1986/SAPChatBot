@@ -1,4 +1,3 @@
-auth_check_controller_examples = """
 Managing Dependencies on ABAP Authority Checks with ABAP Unit
 Overview
 The ABAP Authority Check Test Helper API provides an API-based approach to configure single or multiple users with authorizations in the test environment.
@@ -82,4 +81,3 @@ go_auth_controller->get_auth_check_execution_log( )->get_unexpected_executions(
       passed_but_not_expected = DATA(lt_passed_but_not_expected)
       failed_but_not_expected = DATA(lt_failed_but_not_expected)
 ).
-"""
