@@ -174,10 +174,11 @@ def add_side_bar():
         if st.button(":material/restart_alt: Reset Chat Memory"):
             st.session_state["reset_memory"] = True  # Set flag for reset
             # Reset all the session state variables
-            st.session_state.messages = []
-            st.session_state.total_token_usage = 0
-            st.session_state.last_token_usage = 0
-            st.session_state.display_logs_flag = False
+            st.session_state.clear()
+            # st.session_state.messages = []
+            # st.session_state.total_token_usage = 0
+            # st.session_state.last_token_usage = 0
+            # st.session_state.display_logs_flag = False
             st.rerun()  # Refresh Streamlit page
 
 
