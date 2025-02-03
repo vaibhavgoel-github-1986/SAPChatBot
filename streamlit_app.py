@@ -2,15 +2,55 @@ import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langgraph.checkpoint.memory import MemorySaver
 from Prompts import GreetingMsg
+import streamlit_authenticator as stauth
 
 from Workflows.UTMWorkflow import get_graph
 
 # Set page config (has to be done before any Streamlit command)
 st.set_page_config(
-    page_title="SAP ChatBot",
+    page_title="SAP AI Chat Bot",
     layout="centered",  # "wide",
     initial_sidebar_state="collapsed",
 )
+
+# import yaml
+# from yaml.loader import SafeLoader
+
+# with open("config.yaml") as file:
+#     config = yaml.load(file, Loader=SafeLoader)
+
+# # Pre-hashing all plain text passwords once
+# # stauth.Hasher.hash_passwords(config['credentials'])
+
+# authenticator = stauth.Authenticate(
+#     config["credentials"],
+#     config["cookie"]["name"],
+#     config["cookie"]["key"],
+#     config["cookie"]["expiry_days"],
+# )
+
+# try:
+#     authenticator.login()
+# except Exception as e:
+#     st.error(e)
+
+# if st.session_state["authentication_status"]:
+#     authenticator.logout(button_name="Log Off", location="sidebar")
+#     st.toast(f"You were logged in successfully")
+# elif st.session_state["authentication_status"] is False:
+#     st.error("Username/password is incorrect")
+# elif st.session_state["authentication_status"] is None:
+#     st.warning("Please enter your username and password")
+
+# if st.session_state["authentication_status"]:
+#     try:
+#         if authenticator.reset_password(
+#             st.session_state["username"], location="sidebar"
+#         ):
+#             st.success("Password was reset successfully")
+#     except Exception as e:
+#         st.error(e)
+
 
 # Check if reset flag is set
 reset_memory = st.session_state.pop("reset_memory", False)
@@ -123,12 +163,14 @@ def get_total_token_usage():
     # Fetches token usage statistics from the graph state.
     try:
         snapshot = graph.get_state(get_config())
-        token_usage = snapshot.values.get("messages", [])[-1].response_metadata.get(
-            "token_usage", {}
-        )
-        return token_usage.get("total_tokens", "0")
+        if snapshot:
+            token_usage = snapshot.values.get("messages", [])[-1].response_metadata.get(
+                "token_usage", {}
+            )
+            # st.toast(f"Total Token Usage:{token_usage.get("total_tokens", "0")}")
+            return token_usage.get("total_tokens", "0")
     except Exception as e:
-        st.toast(f":red[Error fetching token usage:] {e}")
+        # st.toast(f":red[Error fetching token usage:] {str(e)}")
         return 0
 
 
@@ -146,13 +188,9 @@ def add_side_bar():
 
             # Show toast only when the toggle changes
             if display_logs_flag:
-                st.toast(
-                    ":green[Logging Activated]", icon=":material/steppers:"
-                )
+                st.toast(":green[Logging Activated]", icon=":material/steppers:")
             else:
-                st.toast(
-                    ":red[Logging Deactivated]", icon=":material/steppers:"
-                )
+                st.toast(":red[Logging Deactivated]", icon=":material/steppers:")
 
         # Add a divider
         st.divider()
@@ -185,7 +223,7 @@ def add_side_bar():
 # Main App
 def main():
 
-    st.header("SAP UTM Chat Bot", divider=True)
+    st.header("ABAP Unit Testing AI Helper", divider=True)
 
     # Initialize chat history
     initialize_chat_history()
@@ -193,11 +231,13 @@ def main():
     # Display chat history
     display_chat_messages()
 
+    update_token_usage()
+    
     # Ensure initial AI greeting is displayed only once per session
     initial_greeting()
 
     # Streaming User Input
-    if prompt := st.chat_input("Message UTM Chat Bot"):
+    if prompt := st.chat_input("Message AI Helper"):
 
         # Update the last token usage for Delta Calculation
         st.session_state.last_token_usage = st.session_state.total_token_usage

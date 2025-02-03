@@ -19,11 +19,10 @@ class GetMethodList(BaseTool):  # type: ignore[override, override]
 
     name: str = "get_method_list"
     description: str = "Fetches the implemented methods in a class definition"
-    args_schema: Type[BaseModel] = MethodListInput
-    response_format: str = "content_and_artifact"
+    args_schema: Type[BaseModel] = MethodListInput 
     return_direct: bool = False
 
-    def _run(self, **kwargs) -> Tuple[List[str], str]:
+    def _run(self, **kwargs) -> List[str]:
         """
         Fetches the class definition and method signatures from an ABAP Class.
         Removes TYPES, DATA, CONSTANTS, and other non-essential parts.
@@ -60,8 +59,9 @@ class GetMethodList(BaseTool):  # type: ignore[override, override]
         )
 
         methods = method_pattern.findall(class_impl_code.group(0))
+        methods = (method.lower() for method in methods)
 
         if methods:
-            return (list(map(str.lower, methods)), class_impl_code.group(0))
+            return methods
         else:
             raise ValueError(f"Methods not found in source code for '{class_name}'.")

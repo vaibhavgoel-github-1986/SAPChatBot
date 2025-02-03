@@ -1,0 +1,27 @@
+cookie:
+  expiry_days: 30
+  key: cookie_key_1
+  name: name_cookie_1
+credentials:
+  usernames:
+    nmayilsa:
+      email: nmayilsa@cisco.com
+      failed_login_attempts: 3
+      first_name: Nalin
+      last_name: Rajendran
+      logged_in: false
+      password: Pass123
+      roles:
+      - developer
+    vaibhago:
+      email: vaibhago@cisco.com
+      failed_login_attempts: 1
+      first_name: Vaibhav
+      last_name: Goel
+      logged_in: false
+      password: Pass123
+      roles:
+      - admin
+      - developer
+pre-authorized:
+  emails: []
