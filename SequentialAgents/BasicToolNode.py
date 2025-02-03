@@ -35,22 +35,9 @@ class BasicToolNode:
                     )
                     
                     outputs.append(tool_message)
-                    
-                    # tool_outputs.append(tool_message)
-
-                    # Only return summarized content for LLM
-                    # if tool_name == "get_source_code":
-                    #     outputs.append(
-                    #         ToolMessage(
-                    #             content="Source Code retrieved successfully.",
-                    #             name=tool_name,
-                    #             tool_call_id=tool_call["id"],
-                    #         )
-                    #     )
-                    # else:
-                    #     outputs.append(tool_message)
+                
                 else:
-                    print(f"Warning: Tool '{tool_name}' not found.")
+                    raise ValueError(f"Tool '{tool_name}' not found.")
 
             return {
                 "messages": outputs,
