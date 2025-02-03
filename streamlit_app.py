@@ -138,7 +138,7 @@ def add_side_bar():
         st.caption("**App Settings**")
 
         # Store the user’s choice persistently
-        display_logs_flag = st.toggle(f"Enable Detailed AI Messages")
+        display_logs_flag = st.toggle(f"Enable Logs")
 
         # Update only if the value changes
         if display_logs_flag != st.session_state.display_logs_flag:
@@ -147,11 +147,11 @@ def add_side_bar():
             # Show toast only when the toggle changes
             if display_logs_flag:
                 st.toast(
-                    ":green[Detailed Logging Activated]", icon=":material/steppers:"
+                    ":green[Logging Activated]", icon=":material/steppers:"
                 )
             else:
                 st.toast(
-                    ":red[Detailed Logging Deactivated]", icon=":material/steppers:"
+                    ":red[Logging Deactivated]", icon=":material/steppers:"
                 )
 
         # Add a divider
