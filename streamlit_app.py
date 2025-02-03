@@ -14,7 +14,9 @@ st.set_page_config(
 
 # Check if reset flag is set
 reset_memory = st.session_state.pop("reset_memory", False)
-graph = get_graph(reset_memory=reset_memory)  # ✅ Reset memory only if button was clicked
+graph = get_graph(
+    reset_memory=reset_memory
+)  # ✅ Reset memory only if button was clicked
 
 
 # Initialize session state variables only if they are not already set
@@ -27,15 +29,17 @@ if "last_token_usage" not in st.session_state:
 # Initialize the toggle in session_state only once
 if "display_logs_flag" not in st.session_state:
     st.session_state.display_logs_flag = False
-            
+
 # Override with Custom CSS
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
 
 # Helper: Initialize chat history in session state
 def initialize_chat_history():
     if "messages" not in st.session_state:
         st.session_state.messages = []
+
 
 # Helper: Display chat messages
 def display_chat_messages():
@@ -43,20 +47,25 @@ def display_chat_messages():
     for message in st.session_state.messages:
         with st.chat_message(message.role):
             st.markdown(message.content)
-    
+
+
 # Get the configuration for the graph
 def get_config():
     return {"configurable": {"thread_id": "1"}}
+
 
 # Helper: Add a message to the chat history
 def add_message(message):
     st.session_state.messages.append(message)
 
+
 def set_last_token_usage(tokens: int):
     st.session_state.last_token_usage = tokens
 
+
 def update_token_usage():
     st.session_state.total_token_usage = get_total_token_usage()
+
 
 # Streamed response generator using LangGraph
 def response_generator(role, prompt, **kwargs):
@@ -68,50 +77,60 @@ def response_generator(role, prompt, **kwargs):
 
     with st.spinner("Processing..."):
 
-        for event in graph.stream(
-            # {"messages": st.session_state.messages}, config=config, stream_mode="values"
-            {"messages": [{"role": role, "content": prompt}]},
-            config=config,
-            stream_mode="values",
-        ):
-            if "messages" in event and event["messages"]:                
-                message = event["messages"][-1]
-                if isinstance(message, HumanMessage):
-                    continue  # Skip user messages
-                elif isinstance(message, AIMessage):
-                    if message.content:
-                        yield message.content
+        try:
+            for event in graph.stream(
+                # {"messages": st.session_state.messages}, config=config, stream_mode="values"
+                {"messages": [{"role": role, "content": prompt}]},
+                config=config,
+                stream_mode="values",
+            ):
+                if "messages" in event and event["messages"]:
+                    message = event["messages"][-1]
+                    if isinstance(message, HumanMessage):
+                        continue  # Skip user messages
+                    elif isinstance(message, AIMessage):
+                        if message.content:
+                            yield message.content
 
-                    elif message.tool_calls and display_logs_flag:
-                        for tool_call in message.tool_calls:
-                            markdown_text = f":green[Calling Tool:]\n\n```abap\n{(tool_call['name'])}\n{(tool_call['args'])}\n```"
-                            yield markdown_text
+                        elif message.tool_calls and display_logs_flag:
+                            for tool_call in message.tool_calls:
+                                markdown_text = f":green[Calling Tool:]\n\n```abap\n{(tool_call['name'])}\n{(tool_call['args'])}\n```"
+                                yield markdown_text
 
-                elif isinstance(message, ToolMessage):
-                    if message.content and display_logs_flag:
-                        if "\\n" in message.content:
-                            # Convert to a proper string (removes escaped backslashes)
-                            formatted_string = message.content.replace("\\n", "\n")
-                            markdown_text = f":green[Tool Output:]\n\n```abap\n{formatted_string}\n```"
-                            yield markdown_text
+                    elif isinstance(message, ToolMessage):
+                        if message.content and display_logs_flag:
+                            if "\\n" in message.content:
+                                # Convert to a proper string (removes escaped backslashes)
+                                formatted_string = message.content.replace("\\n", "\n")
+                                markdown_text = f":green[Tool Output:]\n\n```abap\n{formatted_string}\n```"
+                                yield markdown_text
+
+        except Exception as error:
+            print(f"\nException caught `response_generator`")
+            yield (str(error))
+
 
 def initial_greeting():
     if not any(msg.role == "assistant" for msg in st.session_state.messages):
 
         with st.chat_message("assistant"):
             st.markdown(GreetingMsg.greeting_msg)
-        
+
         add_message(AIMessage(content=GreetingMsg.greeting_msg, role="assistant"))
-            
+
+
 def get_total_token_usage():
     # Fetches token usage statistics from the graph state.
     try:
         snapshot = graph.get_state(get_config())
-        token_usage = snapshot.values.get("messages", [])[-1].response_metadata.get("token_usage", {})
+        token_usage = snapshot.values.get("messages", [])[-1].response_metadata.get(
+            "token_usage", {}
+        )
         return token_usage.get("total_tokens", "0")
     except Exception as e:
         st.toast(f":red[Error fetching token usage:] {e}")
         return 0
+
 
 def add_side_bar():
     # Adding SideBar for App Settings
@@ -127,25 +146,30 @@ def add_side_bar():
 
             # Show toast only when the toggle changes
             if display_logs_flag:
-                st.toast(":green[Detailed Logging Activated]", icon=":material/steppers:")
+                st.toast(
+                    ":green[Detailed Logging Activated]", icon=":material/steppers:"
+                )
             else:
-                st.toast(":red[Detailed Logging Deactivated]", icon=":material/steppers:")
+                st.toast(
+                    ":red[Detailed Logging Deactivated]", icon=":material/steppers:"
+                )
 
         # Add a divider
         st.divider()
-        
+
         # Add Token Usage Metrics
         st.metric(
             label="Tokens Usage",
             value=st.session_state.total_token_usage,
-            delta=st.session_state.total_token_usage - st.session_state.last_token_usage,
+            delta=st.session_state.total_token_usage
+            - st.session_state.last_token_usage,
             delta_color="normal",
             border=False,
         )
-        
+
         # Add a divider
         st.divider()
-        
+
         # Reset Button
         if st.button(":material/restart_alt: Reset Chat Memory"):
             st.session_state["reset_memory"] = True  # Set flag for reset
@@ -156,11 +180,11 @@ def add_side_bar():
             st.session_state.display_logs_flag = False
             st.rerun()  # Refresh Streamlit page
 
-            
+
 # Main App
 def main():
 
-    st.header("SAP Chat Bot", divider=True)
+    st.header("SAP UTM Chat Bot", divider=True)
 
     # Initialize chat history
     initialize_chat_history()
@@ -170,13 +194,13 @@ def main():
 
     # Ensure initial AI greeting is displayed only once per session
     initial_greeting()
-        
+
     # Streaming User Input
-    if prompt := st.chat_input("Type a message..."):
-        
+    if prompt := st.chat_input("Message UTM Chat Bot"):
+
         # Update the last token usage for Delta Calculation
         st.session_state.last_token_usage = st.session_state.total_token_usage
-        
+
         # Add user message to chat history
         add_message(HumanMessage(content=prompt, role="user"))
 
@@ -185,11 +209,10 @@ def main():
             st.markdown(prompt)
 
         # Generate assistant response
-        with st.chat_message("assistant"):   #,avatar=":material/smart_toy:"):
+        with st.chat_message("assistant"):  # ,avatar=":material/smart_toy:"):
             response_container = st.empty()
             response_lines = []
-
-            for line in response_generator( 
+            for line in response_generator(
                 "user",
                 prompt,
                 display_logs_flag=st.session_state.display_logs_flag,
@@ -202,12 +225,13 @@ def main():
 
             # Store AI response
             add_message(AIMessage(content=final_response, role="assistant"))
-            
-            # Update token usage                        
+
+            # Update token usage
             update_token_usage()
 
     # Add a side bar for app settings
     add_side_bar()
+
 
 # Run the app
 if __name__ == "__main__":

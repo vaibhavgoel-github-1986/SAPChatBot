@@ -197,7 +197,7 @@ CLASS ltcl_jira_issues IMPLEMENTATION.
 ENDCLASS.
 
 **Test Double without DOC Interface (Subclassing)**
-📌 If the OUT interacts directly with the DOC, and the DOC is a non-final ABAP class, a test-specific subclass can be created.
+If the OUT interacts directly with the DOC, and the DOC is a non-final ABAP class, a test-specific subclass can be created.
 
 Example: Subclassing
 CLASS zcl_payment_processor DEFINITION.
@@ -233,8 +233,8 @@ Test Class as Friend	Use FRIENDS to overwrite private attributes.
 ABAP Test Seams	Modify the DOC creation logic to instantiate the test double.
 
 Framework Restrictions (Not Supported):
-🚫 Local interfaces and local classes
-🚫 Classic exceptions
-🚫 FINAL or FOR TESTING classes
-🚫 PRIVATE constructor classes
-🚫 Methods marked as FINAL, STATIC, or PRIVATE
+ - Local interfaces and local classes
+ - Classic exceptions
+ - FINAL or FOR TESTING classes
+ - PRIVATE constructor classes
+ - Methods marked as FINAL, STATIC, or PRIVATE
