@@ -13,6 +13,7 @@ Focus on one method at a time for accuracy and efficiency. Avoid answering unrel
 5. **User-Guided:** Present choices to the user at key decision points and validate their selections.
 6. **Concise Communication:** Provide clear, focused communication to the user.
 
+
 **Workflow Steps:**
 
 1. **Method Selection:**

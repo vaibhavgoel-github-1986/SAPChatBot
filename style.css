@@ -1,8 +1,16 @@
-/* For Adding a Border */
+/* For Adding a Border In Sidebar */
 /* .st-emotion-cache-8atqhb {
     border: 1px solid #bab8b8;
     border-radius: 10px;
     padding: 10px 10px 10px 10px;
+} */
+
+/* For the Upper Chat Box */
+/* [data-testid="stVerticalBlock"] {
+    border: 1px solid #bab8b8;
+    border-radius: 10px;
+    padding: 2px 35px 0px 35px;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
 } */
 
 /* For Upper Chat Container */
@@ -17,22 +25,23 @@
     padding-right: 68px;
 }
 
-[data-testid="stMetric"] {
-    border: 1px solid #bab8b8;
+/* For the Metrics */
+/* [data-testid="stMetric"] { */
+/* border: 1px solid #bab8b8;
     border-radius: 10px;
-    padding: 10px 10px 10px 10px;
-    background-color: white;
-}
+    padding: 10px 10px 10px 10px; */
+/* background-color: white; */
+/* } */
 
 /* For Caption Text */
-.st-emotion-cache-eglv7c {
-    font-size: 16px;
+[data-testid="stCaptionContainer"] {
+    font-size: 14px;
     opacity: 0.8;
 }
 
 /* For Toggle Button Text */
 .st-emotion-cache-4tlk2p {
-    font-size: 14px;
+    font-size: 12px;
 }
 
 /* For the Dividers */

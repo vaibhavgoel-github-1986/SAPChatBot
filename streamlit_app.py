@@ -1,15 +1,13 @@
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langgraph.checkpoint.memory import MemorySaver
-from Prompts import GreetingMsg
-import streamlit_authenticator as stauth
+from Prompts import GreetingMsg 
 
 from typing import Annotated
 from typing_extensions import TypedDict
 
 from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph.message import add_messages 
 
 from ChatModels.CiscoAzureOpenAI import CiscoAzureOpenAI
 from Prompts import Prompts
@@ -21,14 +19,14 @@ from Workflows.Tools import tools
 # Set page config (has to be done before any Streamlit command)
 st.set_page_config(
     page_title="SAP AI Chat Bot",
-    layout="wide", 
-    initial_sidebar_state="expanded",
+    layout="wide",
+    initial_sidebar_state="collapsed",
 )
-
+    
 # Graph Memory
 if "memory" not in st.session_state:
     st.session_state.memory = MemorySaver()
-    
+
 # Initialize session state variables only if they are not already set
 if "total_token_usage" not in st.session_state:
     st.session_state.total_token_usage = 0
@@ -37,9 +35,9 @@ if "last_token_usage" not in st.session_state:
     st.session_state.last_token_usage = 0
 
 # Initialize the toggle in session_state only once
-if "display_logs_flag" not in st.session_state:
-    st.session_state.display_logs_flag = False
-
+if "show_logs" not in st.session_state:
+    st.session_state.show_logs = False
+    
 # Override with Custom CSS
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
@@ -48,6 +46,7 @@ with open("style.css") as f:
 # Define the state of the graph
 class State(TypedDict):
     messages: Annotated[list, add_messages]
+
 
 def route_tools(state: State):
     """
@@ -66,7 +65,8 @@ def route_tools(state: State):
         return "tools"
 
     return END
-    
+
+
 # Helper: Initialize chat history in session state
 def initialize_chat_history():
     if "messages" not in st.session_state:
@@ -97,7 +97,10 @@ def set_last_token_usage(tokens: int):
 
 def update_token_usage():
     st.session_state.total_token_usage = get_total_token_usage()
-
+    
+    # if st.session_state.show_token_usage:
+    #     st.info(f":material/info: Total token usage so far: {st.session_state.total_token_usage}")
+    
 
 # Streamed response generator using LangGraph
 def response_generator(role, prompt, **kwargs):
@@ -105,7 +108,7 @@ def response_generator(role, prompt, **kwargs):
     # Define the configuration
     config = get_config()
 
-    display_logs_flag = kwargs.get("display_logs_flag")
+    show_logs = kwargs.get("show_logs")
 
     with st.spinner("Processing..."):
 
@@ -124,13 +127,13 @@ def response_generator(role, prompt, **kwargs):
                         if message.content:
                             yield message.content
 
-                        elif message.tool_calls and display_logs_flag:
+                        elif message.tool_calls and show_logs:
                             for tool_call in message.tool_calls:
                                 markdown_text = f":green[Calling Tool:]\n\n```abap\n{(tool_call['name'])}\n{(tool_call['args'])}\n```"
                                 yield markdown_text
 
                     elif isinstance(message, ToolMessage):
-                        if message.content and display_logs_flag:
+                        if message.content and show_logs:
                             if "\\n" in message.content:
                                 # Convert to a proper string (removes escaped backslashes)
                                 formatted_string = message.content.replace("\\n", "\n")
@@ -139,7 +142,21 @@ def response_generator(role, prompt, **kwargs):
 
         except Exception as error:
             print(f"\nException caught `response_generator`")
-            yield (error["message"])
+            
+            # Extract error message safely
+            error_msg = None
+            
+            # Check if error has 'args' and it's a dictionary
+            if hasattr(error, 'args') and len(error.args) > 0:
+                first_arg = error.args[0]
+                if isinstance(first_arg, dict):
+                    error_msg = first_arg.get('error', {}).get('message', None)
+
+            # Fallback to string conversion if no valid error message is found
+            if not error_msg:
+                error_msg = str(error)
+
+            yield error_msg
 
 
 def initial_greeting():
@@ -149,6 +166,7 @@ def initial_greeting():
             st.markdown(GreetingMsg.greeting_msg)
 
         add_message(AIMessage(content=GreetingMsg.greeting_msg, role="assistant"))
+
 
 def create_graph():
     # Get the LLM Chat Model
@@ -182,9 +200,9 @@ def create_graph():
     graph_builder.add_edge("tools", "chatbot")
     graph_builder.add_edge(START, "chatbot")
     graph = graph_builder.compile(checkpointer=st.session_state.memory)
-    
-    if "graph" not in st.session_state:
-        st.session_state.graph = graph
+
+    return graph
+
 
 def get_total_token_usage():
     # Fetches token usage statistics from the graph state.
@@ -203,38 +221,34 @@ def get_total_token_usage():
 
 def add_side_bar():
     # Adding SideBar for App Settings
-    with st.sidebar:
-        st.caption("**App Settings**")
+    with st.sidebar.container(border=True):
+        st.caption(":material/settings: **Settings**")
 
         # Store the user’s choice persistently
-        display_logs_flag = st.toggle(f"Enable Logs")
-
+        show_logs = st.toggle(f"Enable Logs")
+        
         # Update only if the value changes
-        if display_logs_flag != st.session_state.display_logs_flag:
-            st.session_state.display_logs_flag = display_logs_flag  # Persist state
+        if show_logs != st.session_state.show_logs:
+            st.session_state.show_logs = show_logs  # Persist state
 
-            # Show toast only when the toggle changes
-            if display_logs_flag:
+            # Show toast only when the toggle changes energy_savings_leaf
+            if show_logs:
                 st.toast(":green[Logging Activated]", icon=":material/steppers:")
             else:
                 st.toast(":red[Logging Deactivated]", icon=":material/steppers:")
-
-        # Add a divider
-        st.divider()
-
+        
+    with st.sidebar.container(border=True): 
         # Add Token Usage Metrics
         st.metric(
-            label="Tokens Usage",
+            label=":blue[Token Usage]",
             value=st.session_state.total_token_usage,
             delta=st.session_state.total_token_usage
             - st.session_state.last_token_usage,
             delta_color="normal",
             border=False,
         )
-
-        # Add a divider
-        st.divider()
-
+    
+    with st.sidebar.container(border=True):
         # Reset Button
         if st.button(":material/restart_alt: Clear Chat History", type="primary"):
             st.session_state["reset_memory"] = True  # Set flag for reset
@@ -243,22 +257,22 @@ def add_side_bar():
             st.toast(":green[Chat history was cleared]", icon=":material/ink_eraser:")
             st.rerun()  # Refresh Streamlit page
 
-
+# Initializing Graph Only Once
+if "graph" not in st.session_state:
+    st.session_state.graph = create_graph()
+    
 # Main App
 def main():
 
-    # Create the Grap and Store it in Session Variable
-    create_graph()
-    
     # Setting Header
     st.header("ABAP Unit Testing AI Helper", divider=True)
-    
+
     # Initialize chat history
     initialize_chat_history()
 
     # Display chat history
     display_chat_messages()
-        
+
     # Ensure initial AI greeting is displayed only once per session
     initial_greeting()
 
@@ -282,7 +296,7 @@ def main():
             for line in response_generator(
                 "user",
                 prompt,
-                display_logs_flag=st.session_state.display_logs_flag,
+                show_logs=st.session_state.show_logs,
             ):
                 response_lines.append(line)
                 response_container.markdown("  \n\n".join(response_lines))

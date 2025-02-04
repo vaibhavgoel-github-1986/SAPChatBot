@@ -11,7 +11,7 @@ class GetTableSchemaInput(BaseModel):
 
     table_name: str = Field(description="DB Table Name")
     field_names: Optional[List[str]] = Field(
-        description="List of Fields to be filtered"
+        description="List (array) of Fields to be filtered"
     )
     # system_id: str = Field(
     #     description="System ID for the API Call. List of allowed values:['DHA', 'D2A', 'RHA' ]"
