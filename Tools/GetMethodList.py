@@ -59,7 +59,7 @@ class GetMethodList(BaseTool):  # type: ignore[override, override]
         )
 
         methods = method_pattern.findall(class_impl_code.group(0))
-        methods = (method.lower() for method in methods)
+        methods = [method.lower() for method in methods]
 
         if methods:
             return methods

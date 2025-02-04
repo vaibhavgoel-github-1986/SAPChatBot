@@ -1,8 +1,27 @@
 /* For Adding a Border */
-.st-emotion-cache-8atqhb {
+/* .st-emotion-cache-8atqhb {
     border: 1px solid #bab8b8;
     border-radius: 10px;
     padding: 10px 10px 10px 10px;
+} */
+
+/* For Upper Chat Container */
+[data-testid="stMainBlockContainer"] {
+    padding-left: 8rem;
+    padding-right: 9rem;
+}
+
+/* For Bottom Chat Container */
+[data-testid="stBottom"] {
+    padding-left: 45px;
+    padding-right: 68px;
+}
+
+[data-testid="stMetric"] {
+    border: 1px solid #bab8b8;
+    border-radius: 10px;
+    padding: 10px 10px 10px 10px;
+    background-color: white;
 }
 
 /* For Caption Text */
@@ -18,7 +37,8 @@
 
 /* For the Dividers */
 .st-emotion-cache-1mw54nq {
-    font-size: 2px;
+    font-size: 10px;
+    padding-bottom: 10px;
 }
 
 /* For Human Icon */
@@ -30,4 +50,21 @@
 /* For Bot Icon */
 .st-emotion-cache-bho8sy {
     box-shadow: 3px 2px 5px 1px rgb(0 0 0 / 19%);
+}
+
+/* For Chat Box Selection Border Color */
+.st-d9 {
+    border-bottom-color: #0499d0;
+}
+
+.st-d8 {
+    border-top-color: #0499d0;
+}
+
+.st-d7 {
+    border-right-color: #0499d0;
+}
+
+.st-d6 {
+    border-left-color: #0499d0;
 }

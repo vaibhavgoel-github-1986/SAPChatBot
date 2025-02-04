@@ -4,61 +4,31 @@ from langgraph.checkpoint.memory import MemorySaver
 from Prompts import GreetingMsg
 import streamlit_authenticator as stauth
 
-from Workflows.UTMWorkflow import get_graph
+from typing import Annotated
+from typing_extensions import TypedDict
+
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
+from langgraph.checkpoint.memory import MemorySaver
+
+from ChatModels.CiscoAzureOpenAI import CiscoAzureOpenAI
+from Prompts import Prompts
+from Workflows.BasicToolNode import BasicToolNode
+from ChatModels.TokenManager import TokenManager
+
+from Workflows.Tools import tools
 
 # Set page config (has to be done before any Streamlit command)
 st.set_page_config(
     page_title="SAP AI Chat Bot",
-    layout="centered",  # "wide",
-    initial_sidebar_state="collapsed",
+    layout="wide", 
+    initial_sidebar_state="expanded",
 )
 
-# import yaml
-# from yaml.loader import SafeLoader
-
-# with open("config.yaml") as file:
-#     config = yaml.load(file, Loader=SafeLoader)
-
-# # Pre-hashing all plain text passwords once
-# # stauth.Hasher.hash_passwords(config['credentials'])
-
-# authenticator = stauth.Authenticate(
-#     config["credentials"],
-#     config["cookie"]["name"],
-#     config["cookie"]["key"],
-#     config["cookie"]["expiry_days"],
-# )
-
-# try:
-#     authenticator.login()
-# except Exception as e:
-#     st.error(e)
-
-# if st.session_state["authentication_status"]:
-#     authenticator.logout(button_name="Log Off", location="sidebar")
-#     st.toast(f"You were logged in successfully")
-# elif st.session_state["authentication_status"] is False:
-#     st.error("Username/password is incorrect")
-# elif st.session_state["authentication_status"] is None:
-#     st.warning("Please enter your username and password")
-
-# if st.session_state["authentication_status"]:
-#     try:
-#         if authenticator.reset_password(
-#             st.session_state["username"], location="sidebar"
-#         ):
-#             st.success("Password was reset successfully")
-#     except Exception as e:
-#         st.error(e)
-
-
-# Check if reset flag is set
-reset_memory = st.session_state.pop("reset_memory", False)
-graph = get_graph(
-    reset_memory=reset_memory
-)  # ✅ Reset memory only if button was clicked
-
-
+# Graph Memory
+if "memory" not in st.session_state:
+    st.session_state.memory = MemorySaver()
+    
 # Initialize session state variables only if they are not already set
 if "total_token_usage" not in st.session_state:
     st.session_state.total_token_usage = 0
@@ -75,6 +45,28 @@ with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 
+# Define the state of the graph
+class State(TypedDict):
+    messages: Annotated[list, add_messages]
+
+def route_tools(state: State):
+    """
+    Use in the conditional_edge to route to the ToolNode if the last message
+    has tool calls. Otherwise, route to the end.
+    """
+
+    messages = state.get("messages", [])
+
+    if not messages:
+        raise ValueError(f"No messages found in input state to tool_edge: {state}")
+
+    ai_message = messages[-1]  # Always get the last message
+
+    if hasattr(ai_message, "tool_calls") and ai_message.tool_calls:
+        return "tools"
+
+    return END
+    
 # Helper: Initialize chat history in session state
 def initialize_chat_history():
     if "messages" not in st.session_state:
@@ -118,7 +110,7 @@ def response_generator(role, prompt, **kwargs):
     with st.spinner("Processing..."):
 
         try:
-            for event in graph.stream(
+            for event in st.session_state.graph.stream(
                 # {"messages": st.session_state.messages}, config=config, stream_mode="values"
                 {"messages": [{"role": role, "content": prompt}]},
                 config=config,
@@ -147,7 +139,7 @@ def response_generator(role, prompt, **kwargs):
 
         except Exception as error:
             print(f"\nException caught `response_generator`")
-            yield (str(error))
+            yield (error["message"])
 
 
 def initial_greeting():
@@ -158,11 +150,46 @@ def initial_greeting():
 
         add_message(AIMessage(content=GreetingMsg.greeting_msg, role="assistant"))
 
+def create_graph():
+    # Get the LLM Chat Model
+    llm = CiscoAzureOpenAI(token_manager=TokenManager()).get_llm()
+
+    # Create the state graph
+    graph_builder = StateGraph(State)
+
+    llm_with_tools = llm.bind_tools(tools)
+
+    def chatbot(state: State):
+        system_prompt_message = {"role": "system", "content": Prompts.system_prompt}
+
+        if "messages" not in state or not isinstance(state["messages"], list):
+            state["messages"] = []
+
+        messages = [system_prompt_message] + state["messages"]
+        return {"messages": [llm_with_tools.invoke(messages)]}
+
+    # Add the nodes to the graph
+    graph_builder.add_node("chatbot", chatbot)
+
+    # Create the tool node
+    tool_node = BasicToolNode(tools=tools)
+    graph_builder.add_node("tools", tool_node)
+
+    # Add the conditional edges
+    graph_builder.add_conditional_edges("chatbot", route_tools)
+
+    # Add the nodes to the graph
+    graph_builder.add_edge("tools", "chatbot")
+    graph_builder.add_edge(START, "chatbot")
+    graph = graph_builder.compile(checkpointer=st.session_state.memory)
+    
+    if "graph" not in st.session_state:
+        st.session_state.graph = graph
 
 def get_total_token_usage():
     # Fetches token usage statistics from the graph state.
     try:
-        snapshot = graph.get_state(get_config())
+        snapshot = st.session_state.graph.get_state(get_config())
         if snapshot:
             token_usage = snapshot.values.get("messages", [])[-1].response_metadata.get(
                 "token_usage", {}
@@ -209,30 +236,29 @@ def add_side_bar():
         st.divider()
 
         # Reset Button
-        if st.button(":material/restart_alt: Reset Chat Memory"):
+        if st.button(":material/restart_alt: Clear Chat History", type="primary"):
             st.session_state["reset_memory"] = True  # Set flag for reset
             # Reset all the session state variables
             st.session_state.clear()
-            # st.session_state.messages = []
-            # st.session_state.total_token_usage = 0
-            # st.session_state.last_token_usage = 0
-            # st.session_state.display_logs_flag = False
+            st.toast(":green[Chat history was cleared]", icon=":material/ink_eraser:")
             st.rerun()  # Refresh Streamlit page
 
 
 # Main App
 def main():
 
+    # Create the Grap and Store it in Session Variable
+    create_graph()
+    
+    # Setting Header
     st.header("ABAP Unit Testing AI Helper", divider=True)
-
+    
     # Initialize chat history
     initialize_chat_history()
 
     # Display chat history
     display_chat_messages()
-
-    update_token_usage()
-    
+        
     # Ensure initial AI greeting is displayed only once per session
     initial_greeting()
 
@@ -269,7 +295,7 @@ def main():
 
             # Update token usage
             update_token_usage()
-
+    
     # Add a side bar for app settings
     add_side_bar()
 

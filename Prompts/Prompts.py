@@ -41,7 +41,8 @@ Focus on one method at a time for accuracy and efficiency. Avoid answering unrel
    - Interfaces (if not already retrieved).
 
 5. **Table Schema Retrieval (Conditional):**
-   - ONLY if there are any SELECT statements in the method code, use tool `get_table_schema` to fetch the table schema.
+   - Check if there are any Select queries in the method code. If no select queries are there proceed to step 6.
+   - If there are any SELECT statements in the method code, you can use tool `get_table_schema` to fetch the table schema.
    - For each identified table, use `get_table_schema` to retrieve the field list which are being fetched from the respective table
    - Display table names with their fields to the user.
    - If the pattern is like `SELECT * FROM <table> INTO TABLE lt_data`, then analyze the code to identify used fields from lt_data.
@@ -51,7 +52,6 @@ Focus on one method at a time for accuracy and efficiency. Avoid answering unrel
    - Identify dependency types (SQL, CDS, OO-ABAP, Function Module, Test Seams, Auth Check, etc.) in the method code.
    - Use `get_test_double_examples` to fetch relevant examples for each identified dependency type.
    - Implement the appropriate test doubles in the unit test code.
-   - Ensure the test doubles simulate the behavior of the real dependencies accurately.
    
 7. **Assertion ABAP API Retrieval (Conditional):**
    - If required use the tool `get_class_definition` to retrieve the definition of the assertion API (e.g., "CL_ABAP_UNIT_ASSERT").
@@ -59,7 +59,7 @@ Focus on one method at a time for accuracy and efficiency. Avoid answering unrel
    - Avoid using `assert_initial` and `assert_not_initial` unless absolutely necessary.
 
 8. **Generate Unit Test Cases for the Method:**
-   - Construct  ABAP Unit Test Cases  following best practices.
+   - Construct  ABAP Unit Test Cases following best practices.
    - Cover a broad range of scenarios:
       -  Positive Tests : Validate expected behavior with correct inputs.
       -  Negative Tests : Verify error handling and exception cases.

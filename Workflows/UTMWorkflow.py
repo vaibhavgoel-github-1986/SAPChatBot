@@ -9,7 +9,7 @@ from langgraph.checkpoint.memory import MemorySaver
 
 from ChatModels.CiscoAzureOpenAI import CiscoAzureOpenAI
 from Prompts import Prompts
-from SequentialAgents.BasicToolNode import BasicToolNode
+from Workflows.BasicToolNode import BasicToolNode
 from ChatModels.TokenManager import TokenManager
 
 from Workflows.Tools import tools
@@ -94,11 +94,7 @@ def create_graph():
     return graph
 
 
-def get_graph(reset_memory=False):
-    """Returns a LangGraph instance, resetting memory if requested."""
-    global memory
-    if reset_memory:
-        clear_memory()  # ✅ Reset memory before returning the graph
+def get_graph():
     return create_graph()
 
 
