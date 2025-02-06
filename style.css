@@ -173,8 +173,12 @@ div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssista
     border-color:  rgb(255 189 68 / 22%);
 }
 
-
 /* Target the specific stVerticalBlock inside chat messages */
 div[data-testid="stChatMessage"] div[data-testid="stVerticalBlock"] {
-    gap: 0px;
+    gap: 1px;
 }
+
+
+
+
+

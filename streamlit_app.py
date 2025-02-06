@@ -77,13 +77,11 @@ def get_current_timestamp():
 def get_time_html(current_pst_time):
     # HTML to display timestamp in a compact, small format
     html = f"""
-    <div style="
-        display: flex; 
-        justify-content: flex-end; 
-        font-size: 12px; 
-        color: gray; ">
-        {current_pst_time}
-    </div>
+    <div id="timestamp-div" 
+        style="display: flex; 
+               justify-content: flex-end; 
+               font-size: 12px; 
+               color: gray; ">{current_pst_time}</div>
     """
 
     return html
@@ -324,7 +322,7 @@ def main():
     st.session_state.graph = create_graph()
 
     # Setting Header
-    st.header("SAP ABAP Unit Testing AI Agent", divider=True)
+    st.header(":blue[SAP ABAP Unit Testing AI Agent]", divider=True)
 
     # Initialize chat history
     initialize_chat_history()
@@ -359,6 +357,7 @@ def main():
         with st.chat_message("assistant"):  # ,avatar=":material/smart_toy:"):
             response_container = st.empty()
             response_lines = []
+    
             for line in response_generator(
                 "user",
                 prompt,
@@ -366,8 +365,7 @@ def main():
             ):
                 response_lines.append(line)
                 response_container.markdown("  \n\n".join(response_lines))
-                st.html(get_time_html(get_current_timestamp()))
-
+            
             # Combine streamed response into a single string
             final_response = "  \n\n".join(response_lines)
 
@@ -379,9 +377,8 @@ def main():
                     additional_kwargs={"time": get_current_timestamp()},
                 )
             )
-
-            # Update token usage
-            # update_token_usage()
+            
+            st.html(get_time_html(get_current_timestamp()))
 
     # Add a side bar for app settings
     add_side_bar()
