@@ -5,4 +5,3 @@ runOnSave = false
 [browser]
 # Whether to send usage statistics to Streamlit.
 gatherUsageStats = false
-

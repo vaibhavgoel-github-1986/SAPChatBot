@@ -13,6 +13,65 @@
     box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
 } */
 
+/* 🔹 Secondary Buttons Inside the Sidebar */
+div[data-testid="stSidebarContent"] button[kind="secondary"] {
+    background-color: white !important; 
+    border: 1px solid rgb(255, 75, 75) !important; 
+    color: rgb(255, 75, 75) !important; 
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out !important;
+}
+
+/* 🌟 Hover Effect (Smooth Light Red Background) */
+div[data-testid="stSidebarContent"] button[kind="secondary"]:hover {
+    background-color: rgba(244, 169, 169, 0.1) !important; 
+    border-color: rgb(255, 50, 50) !important; 
+    color: rgb(255, 50, 50) !important; 
+}
+
+/* 🎯 Click Effect (Tap or Hold) */
+div[data-testid="stSidebarContent"] button[kind="secondary"]:active {
+    background-color: rgb(255, 75, 75) !important; 
+    color: white !important; /* White Text */
+    border-color: rgb(255, 50, 50) !important; 
+}
+/* For Secondary Buttons in Side Bar */
+
+
+/* For Primary Buttons in Upper Chat Container */
+div[data-testid="stMainBlockContainer"] button[kind="primary"] {
+    background-color: #0078D4 !important;
+    color: white !important;
+    border-radius: 6px !important;
+    font-weight: bold !important;
+    padding: 4px 10px !important;
+    border: 2px solid #005A9E !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out !important;
+}
+
+/* 🔹 Fix Font-Size Inside the Button */
+div[data-testid="stMainBlockContainer"] button[kind="primary"] div[data-testid="stMarkdownContainer"] p {
+    font-size: 14px !important;
+    margin: 0 !important;
+}
+
+/* 🌟 Hover Effect */
+div[data-testid="stMainBlockContainer"] button[kind="primary"]:hover {
+    background-color: #005A9E !important;
+    border-color: #004080 !important;
+}
+
+/* 🎯 Click Effect (Tap or Hold) */
+div[data-testid="stMainBlockContainer"] button[kind="primary"]:active {
+    background-color: white !important;
+    color: #0078D4 !important;
+    border-color: #0078D4 !important;
+}
+/* For Primary Buttons in Upper Chat Container */
+
+
 /* For Upper Chat Container */
 [data-testid="stMainBlockContainer"] {
     padding-left: 8rem;
@@ -76,4 +135,46 @@
 
 .st-d6 {
     border-left-color: #0499d0;
+}
+
+/* Select ONLY the Assistant's Chat Message */
+/* div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) { 
+    padding: 1rem; 
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1) !important;  
+    transition: box-shadow 0.3s ease-in-out !important;  
+} */
+
+/* 🌟 Default Chat Message Styling */
+div[data-testid="stChatMessage"] {
+    background: white !important; /* Clean white background */
+    border-radius: 12px !important; /* Rounded corners */
+    padding: 1rem !important; /* Spacing inside */
+    /* box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.1) !important;   */
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out !important; /* Smooth transition */
+}
+
+/* ✨ Stronger Hover Effect */
+div[data-testid="stChatMessage"]:hover {
+    transform: scale(1.01) !important; /* Slight zoom effect */
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2) !important; /* Enhanced shadow */
+}
+
+/* 📌 Style for User Messages */
+div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
+    /* box-shadow: 0px 1px 10px rgb(87 182 104 / 20%) !important; */
+    border: 1.5px solid;
+    border-color:  rgb(87 182 104 / 20%);
+}
+
+/* 🤖 Style for Assistant Messages */
+div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
+    /* box-shadow: 0px 1px 10px rgb(255 189 68 / 22%)  !important;  */
+    border: 1.5px solid;
+    border-color:  rgb(255 189 68 / 22%);
+}
+
+
+/* Target the specific stVerticalBlock inside chat messages */
+div[data-testid="stChatMessage"] div[data-testid="stVerticalBlock"] {
+    gap: 0px;
 }

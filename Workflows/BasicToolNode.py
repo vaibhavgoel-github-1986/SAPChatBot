@@ -27,7 +27,7 @@ class BasicToolNode:
 
                     outputs.append(
                         ToolMessage(
-                            content=json.dumps(tool_result, indent=2),
+                            content=json.dumps(tool_result),
                             name=tool_name,
                             tool_call_id=tool_call["id"],
                         )
