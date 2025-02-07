@@ -119,15 +119,14 @@ def display_chat_messages():
     # Display existing chat history
     for message in st.session_state.messages:
         with st.chat_message(message.role):
-            content_parts = extract_code_blocks(message.content)
-            for content in content_parts:
-                if content["type"] == "text":
-                    st.markdown(content["content"])  # Display normal text
-                else:
-                    st.code(body=content["content"], language="abap", line_numbers=True)
-
+            # content_parts = extract_code_blocks(message.content)
+            # for content in content_parts:
+            #     if content["type"] == "text":
+            #         st.markdown(content["content"])  # Display normal text
+            #     else:
+            #         st.code(body=content["content"], language="abap", line_numbers=True)
+            st.markdown(message.content)
             st.html(get_time_html(message.additional_kwargs["time"]))
-            # st.markdown(message.content)
 
 
 # Get the configuration for the graph
@@ -276,22 +275,6 @@ def get_total_token_usage():
 
 
 def add_side_bar():
-    # Adding SideBar for App Settings
-    with st.sidebar.container(border=True):
-        st.caption(":material/settings: **Settings**")
-
-        # Store the user’s choice persistently
-        show_logs = st.toggle(f"Enable Logs")
-
-        # Update only if the value changes
-        if show_logs != st.session_state.show_logs:
-            st.session_state.show_logs = show_logs  # Persist state
-
-            # Show toast only when the toggle changes energy_savings_leaf
-            if show_logs:
-                st.toast(":green[Logging Activated]", icon=":material/steppers:")
-            else:
-                st.toast(":red[Logging Deactivated]", icon=":material/steppers:")
 
     with st.sidebar.container(border=True):
         if st.session_state.total_token_usage >= 0:
@@ -304,8 +287,26 @@ def add_side_bar():
                 delta_color="normal",
                 border=False,
             )
-
+        
+    # Adding SideBar for App Settings
     with st.sidebar.container(border=True):
+        st.caption(":material/settings: **Settings**")
+
+        # Store the user’s choice persistently
+        show_logs = st.toggle(f"Enable Logs")
+                
+        # Update only if the value changes
+        if show_logs != st.session_state.show_logs:
+            st.session_state.show_logs = show_logs  # Persist state
+
+            # Show toast only when the toggle changes energy_savings_leaf
+            if show_logs:
+                st.toast(":green[Logging Activated]", icon=":material/steppers:")
+            else:
+                st.toast(":red[Logging Deactivated]", icon=":material/steppers:")
+        
+
+    with st.sidebar.container(border=False):
         # Reset Button
         if st.button(":material/restart_alt: Clear Chat History", type="secondary"):
             st.session_state["reset_memory"] = True  # Set flag for reset
@@ -321,15 +322,15 @@ def main():
     # Initialize Graph
     st.session_state.graph = create_graph()
 
-    # Setting Header
-    st.header(":blue[SAP ABAP Unit Testing AI Agent]", divider=True)
-
     # Initialize chat history
     initialize_chat_history()
 
+    # Setting Header
+    st.header(":blue[SAP ABAP Unit Testing AI Agent]", divider=True)
+    
     # Display chat history
     display_chat_messages()
-
+    
     # Ensure initial AI greeting is displayed only once per session
     initial_greeting()
 
