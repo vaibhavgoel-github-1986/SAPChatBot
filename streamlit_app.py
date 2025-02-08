@@ -4,22 +4,13 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_community.callbacks import get_openai_callback
 from Prompts import GreetingMsg
 
-from typing import Annotated
-from typing_extensions import TypedDict
-
-from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
-
-from ChatModels.CiscoAzureOpenAI import CiscoAzureOpenAI
-from Prompts import Prompts
-from Workflows.BasicToolNode import BasicToolNode
-from ChatModels.TokenManager import TokenManager
 from datetime import datetime
+import time
 import pytz
 import re
 
 from Workflows.Tools import tools
-
+from Workflows.Graph import create_graph
 
 # Set page config (has to be done before any Streamlit command)
 st.set_page_config(
@@ -29,43 +20,34 @@ st.set_page_config(
 )
 
 # Ensure all session state variables are initialized
+# Step 1: Ensure "memory" is initialized first
+if "memory" not in st.session_state:
+    st.session_state["memory"] = MemorySaver()
+
+# Step 2: Now initialize other session variables, using memory
 for var, default in {
-    "memory": MemorySaver(),
     "total_token_usage": 0,
     "last_token_usage": 0,
     "show_logs": False,
+    "login_time": time.time(),
+    "graph": create_graph(st.session_state["memory"]),  # Now memory is available
 }.items():
     if var not in st.session_state:
         st.session_state[var] = default
 
 
+def check_and_reinstantiate_graph():
+    current_time = time.time()
+    elapsed_time = current_time - st.session_state["login_time"]
+    if elapsed_time >= 3600:  # 60 minutes * 60 seconds
+        st.session_state["graph"] = create_graph(st.session_state["memory"])
+        st.session_state["login_time"] = current_time  # Reset login time
+        st.toast(":green[oAuth Token was refreshed]", icon=":material/refresh:")
+
+
 # Override with Custom CSS
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
-
-# Define the state of the graph
-class State(TypedDict):
-    messages: Annotated[list, add_messages]
-
-
-def route_tools(state: State):
-    """
-    Use in the conditional_edge to route to the ToolNode if the last message
-    has tool calls. Otherwise, route to the end.
-    """
-
-    messages = state.get("messages", [])
-
-    if not messages:
-        raise ValueError(f"No messages found in input state to tool_edge: {state}")
-
-    ai_message = messages[-1]  # Always get the last message
-
-    if hasattr(ai_message, "tool_calls") and ai_message.tool_calls:
-        return "tools"
-
-    return END
 
 
 def get_current_timestamp():
@@ -168,26 +150,32 @@ def response_generator(role, prompt, **kwargs):
                     if "messages" in event and event["messages"]:
                         message = event["messages"][-1]
                         if isinstance(message, HumanMessage):
+                            print(f"\nUser Message: {message.content}")
                             continue  # Skip user messages
 
                         elif isinstance(message, AIMessage):
                             if message.content:
+                                print(f"\nAI Message: {message.content}")
                                 yield message.content
 
-                            elif message.tool_calls and show_logs:
+                            elif message.tool_calls:
                                 for tool_call in message.tool_calls:
                                     markdown_text = f":green[Calling Tool:]\n\n```abap\n{(tool_call['name'])}\n{(tool_call['args'])}\n```"
-                                    yield markdown_text
+                                    print(f"\nAI Tool Call: {markdown_text}")
+                                    if show_logs:
+                                        yield markdown_text
 
                         elif isinstance(message, ToolMessage):
-                            if message.content and show_logs:
+                            if message.content:
                                 if "\\n" in message.content:
                                     # Convert to a proper string (removes escaped backslashes)
                                     formatted_string = message.content.replace(
                                         "\\n", "\n"
                                     )
                                     markdown_text = f":green[Tool Output:]\n\n```abap\n{formatted_string}\n```"
-                                    yield markdown_text
+                                    print(f"\nTool Message: {markdown_text}")
+                                    if show_logs:
+                                        yield markdown_text
 
             st.session_state.total_token_usage = cb.total_tokens
 
@@ -201,7 +189,7 @@ def response_generator(role, prompt, **kwargs):
                 yield "Some exception was caught in `response_generator`"
 
 
-def initial_greeting():
+def initial_greeting():  # Display initial greeting message
     if not any(msg.role == "assistant" for msg in st.session_state.messages):
 
         with st.chat_message("assistant"):
@@ -215,42 +203,6 @@ def initial_greeting():
                 additional_kwargs={"time": get_current_timestamp()},
             )
         )
-
-
-def create_graph():
-    # Get the LLM Chat Model
-    llm = CiscoAzureOpenAI(token_manager=TokenManager()).get_llm()
-
-    # Create the state graph
-    graph_builder = StateGraph(State)
-
-    llm_with_tools = llm.bind_tools(tools)
-
-    def chatbot(state: State):
-        system_prompt_message = {"role": "system", "content": Prompts.system_prompt}
-
-        if "messages" not in state or not isinstance(state["messages"], list):
-            state["messages"] = []
-
-        messages = [system_prompt_message] + state["messages"]
-        return {"messages": [llm_with_tools.invoke(messages)]}
-
-    # Add the nodes to the graph
-    graph_builder.add_node("chatbot", chatbot)
-
-    # Create the tool node
-    tool_node = BasicToolNode(tools=tools)
-    graph_builder.add_node("tools", tool_node)
-
-    # Add the conditional edges
-    graph_builder.add_conditional_edges("chatbot", route_tools)
-
-    # Add the nodes to the graph
-    graph_builder.add_edge("tools", "chatbot")
-    graph_builder.add_edge(START, "chatbot")
-    graph = graph_builder.compile(checkpointer=st.session_state.memory)
-
-    return graph
 
 
 def get_total_token_usage():
@@ -276,6 +228,35 @@ def get_total_token_usage():
 
 def add_side_bar():
 
+    # Adding SideBar for App Settings
+    with st.sidebar.container(border=True):
+        st.caption(":material/settings: **Settings**")
+
+        # Store the user’s choice persistently
+        show_logs = st.toggle(f"Enable Logs")
+
+        # Update only if the value changes
+        if show_logs != st.session_state.show_logs:
+            st.session_state.show_logs = show_logs  # Persist state
+
+            # Show toast only when the toggle changes energy_savings_leaf
+            if show_logs:
+                st.toast(":green[Logging Activated]", icon=":material/steppers:")
+            else:
+                st.toast(":red[Logging Deactivated]", icon=":material/steppers:")
+
+        # Reset Button
+        if st.button(":material/restart_alt: Clear Chat History", type="secondary"):
+            st.session_state["reset_memory"] = True  # Set flag for reset
+            # Reset all the session state variables
+            st.session_state.clear()
+            st.toast(":green[Chat history was cleared]", icon=":material/ink_eraser:")
+            st.rerun()  # Refresh Streamlit page
+
+    with st.sidebar.container(border=False):
+        # Add a separator
+        st.write("") 
+        
     with st.sidebar.container(border=True):
         if st.session_state.total_token_usage >= 0:
             # Add Token Usage Metrics
@@ -287,50 +268,23 @@ def add_side_bar():
                 delta_color="normal",
                 border=False,
             )
-        
-    # Adding SideBar for App Settings
-    with st.sidebar.container(border=True):
-        st.caption(":material/settings: **Settings**")
-
-        # Store the user’s choice persistently
-        show_logs = st.toggle(f"Enable Logs")
-                
-        # Update only if the value changes
-        if show_logs != st.session_state.show_logs:
-            st.session_state.show_logs = show_logs  # Persist state
-
-            # Show toast only when the toggle changes energy_savings_leaf
-            if show_logs:
-                st.toast(":green[Logging Activated]", icon=":material/steppers:")
-            else:
-                st.toast(":red[Logging Deactivated]", icon=":material/steppers:")
-        
-
-    with st.sidebar.container(border=False):
-        # Reset Button
-        if st.button(":material/restart_alt: Clear Chat History", type="secondary"):
-            st.session_state["reset_memory"] = True  # Set flag for reset
-            # Reset all the session state variables
-            st.session_state.clear()
-            st.toast(":green[Chat history was cleared]", icon=":material/ink_eraser:")
-            st.rerun()  # Refresh Streamlit page
 
 
 # Main App
 def main():
 
-    # Initialize Graph
-    st.session_state.graph = create_graph()
+    # Check and reinstantiate graph after 1 hour
+    check_and_reinstantiate_graph()
 
     # Initialize chat history
     initialize_chat_history()
 
     # Setting Header
     st.header(":blue[SAP ABAP Unit Testing AI Agent]", divider=True)
-    
+
     # Display chat history
     display_chat_messages()
-    
+
     # Ensure initial AI greeting is displayed only once per session
     initial_greeting()
 
@@ -358,7 +312,7 @@ def main():
         with st.chat_message("assistant"):  # ,avatar=":material/smart_toy:"):
             response_container = st.empty()
             response_lines = []
-    
+
             for line in response_generator(
                 "user",
                 prompt,
@@ -366,7 +320,7 @@ def main():
             ):
                 response_lines.append(line)
                 response_container.markdown("  \n\n".join(response_lines))
-            
+
             # Combine streamed response into a single string
             final_response = "  \n\n".join(response_lines)
 
@@ -378,7 +332,7 @@ def main():
                     additional_kwargs={"time": get_current_timestamp()},
                 )
             )
-            
+
             st.html(get_time_html(get_current_timestamp()))
 
     # Add a side bar for app settings
