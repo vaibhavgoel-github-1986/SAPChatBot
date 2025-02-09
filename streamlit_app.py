@@ -1,3 +1,4 @@
+from pydantic import ValidationError
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langgraph.checkpoint.memory import MemorySaver
@@ -9,12 +10,13 @@ import time
 import pytz
 import re
 
+from Tools.GetMethodList import MethodListOutput
 from Workflows.Tools import tools
 from Workflows.Graph import create_graph
 
 # Set page config (has to be done before any Streamlit command)
 st.set_page_config(
-    page_title="SAP AI Chat Bot",
+    page_title="SAP AI Agent",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -141,8 +143,7 @@ def response_generator(role, prompt, **kwargs):
 
         try:
             with get_openai_callback() as cb:
-                for event in st.session_state.graph.stream(
-                    # {"messages": st.session_state.messages}, config=config, stream_mode="values"
+                for event in st.session_state.graph.stream( 
                     {"messages": [{"role": role, "content": prompt}]},
                     config=config,
                     stream_mode="values",
@@ -156,6 +157,9 @@ def response_generator(role, prompt, **kwargs):
                         elif isinstance(message, AIMessage):
                             if message.content:
                                 print(f"\nAI Message: {message.content}")
+                            
+
+
                                 yield message.content
 
                             elif message.tool_calls:
@@ -167,13 +171,14 @@ def response_generator(role, prompt, **kwargs):
 
                         elif isinstance(message, ToolMessage):
                             if message.content:
+                                print(f"\nTool Message: {message.content}")
                                 if "\\n" in message.content:
                                     # Convert to a proper string (removes escaped backslashes)
                                     formatted_string = message.content.replace(
                                         "\\n", "\n"
                                     )
                                     markdown_text = f":green[Tool Output:]\n\n```abap\n{formatted_string}\n```"
-                                    print(f"\nTool Message: {markdown_text}")
+                                    print(f"\nTool Message Output having ABAP Code")                                    
                                     if show_logs:
                                         yield markdown_text
 
