@@ -35,11 +35,10 @@ def route_tools(state: State):
 def create_graph(memory: MemorySaver):
     # Get the LLM Chat Model
     llm = CiscoAzureOpenAI(token_manager=TokenManager()).get_llm()
-
+    llm_with_tools = llm.bind_tools(tools)
+        
     # Create the state graph
     graph_builder = StateGraph(State)
-
-    llm_with_tools = llm.bind_tools(tools)
 
     def chatbot(state: State):
         system_prompt_message = {"role": "system", "content": Prompts.system_prompt}

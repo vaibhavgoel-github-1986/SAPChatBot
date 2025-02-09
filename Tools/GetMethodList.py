@@ -1,16 +1,8 @@
 from typing import List, Type
 import re
 from pydantic import BaseModel, Field
-from langchain_core.tools import BaseTool
-from langchain_core.callbacks import CallbackManagerForToolRun
+from langchain_core.tools import BaseTool 
 from Utilities.GetClassSourceCode import get_class_source_code
-
-class MethodListOutput(BaseModel):
-    """Structured output containing method details for a given ABAP class."""
-    
-    class_name: str = Field(..., description="The name of the SAP ABAP class.")
-    methods: List[str] = Field(..., description="List of methods implemented in the class.")
-
 
 class MethodListInput(BaseModel):
     """Input for the GetClassDefinition tool."""
@@ -19,7 +11,7 @@ class MethodListInput(BaseModel):
         description="SAP ABAP Class Name, usually starts with ZCL_* or zcl_* pattern."
     )
 
-
+ 
 class GetMethodList(BaseTool):  # type: ignore[override, override]
     """Tool that fetches the class definition and method signatures from a specified ABAP Class."""
 
@@ -28,7 +20,7 @@ class GetMethodList(BaseTool):  # type: ignore[override, override]
     args_schema: Type[BaseModel] = MethodListInput 
     return_direct: bool = False
 
-    def _run(self, **kwargs) -> MethodListOutput: #List[str]:
+    def _run(self, **kwargs) -> List[str]:
         """
         Fetches the class definition and method signatures from an ABAP Class.
         Removes TYPES, DATA, CONSTANTS, and other non-essential parts.
@@ -68,7 +60,7 @@ class GetMethodList(BaseTool):  # type: ignore[override, override]
         methods = [method.lower() for method in methods]
 
         if methods:
-            return MethodListOutput(class_name=class_name, methods=methods) 
-            # return methods
+            # return MethodListOutput(class_name=class_name, methods=methods) 
+            return methods
         else:
             raise ValueError(f"Methods not found in source code for '{class_name}'.")
