@@ -75,6 +75,7 @@ class CiscoAzureOpenAI:
                 api_key=api_key,
                 api_version=self.api_version,
                 verbose=True,
+                temperature=0.2,
                 model_kwargs={
                     "user": f'{{"appkey": "{self.app_key}", "user": "{self.user_id}"}}'
                 },
