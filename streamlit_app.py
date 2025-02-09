@@ -156,9 +156,6 @@ def response_generator(role, prompt, **kwargs):
                         elif isinstance(message, AIMessage):
                             if message.content:
                                 print(f"\nAI Message: {message.content}")
-                            
-
-
                                 yield message.content
 
                             elif message.tool_calls:
@@ -249,14 +246,6 @@ def add_side_bar():
             else:
                 st.toast(":red[Logging Deactivated]", icon=":material/steppers:")
 
-        # Reset Button
-        if st.button(":material/restart_alt: Clear Chat History", type="secondary"):
-            st.session_state["reset_memory"] = True  # Set flag for reset
-            # Reset all the session state variables
-            st.session_state.clear()
-            st.toast(":green[Chat history was cleared]", icon=":material/ink_eraser:")
-            st.rerun()  # Refresh Streamlit page
-
     with st.sidebar.container(border=False):
         # Add a separator
         st.write("") 
@@ -273,6 +262,19 @@ def add_side_bar():
                 border=False,
             )
 
+    with st.sidebar.container(border=False):
+        # Add a separator
+        st.write("")
+    
+    with st.sidebar.container(border=True):
+        st.caption(":material/settings: **Manage History**")
+        # Reset Button
+        if st.button(":material/restart_alt: Clear Chat History", type="secondary"):
+            st.session_state["reset_memory"] = True  # Set flag for reset
+            # Reset all the session state variables
+            st.session_state.clear()
+            st.toast(":green[Chat history was cleared]", icon=":material/ink_eraser:")
+            st.rerun()  # Refresh Streamlit page
 
 # Main App
 def main():
