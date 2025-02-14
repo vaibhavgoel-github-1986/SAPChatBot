@@ -9,3 +9,8 @@ typing_extensions
 langsmith
 tavily-python 
 langchain_community
+google-auth
+google-auth-oauthlib 
+google-auth-httplib2 
+flask
+streamlit-authenticator
