@@ -4,10 +4,9 @@ from typing_extensions import Annotated
 from typing_extensions import TypedDict
 from langgraph.checkpoint.memory import MemorySaver
 
-from ChatModels.CiscoAzureOpenAI import CiscoAzureOpenAI
+from Utilities.GetAzureLLM import get_azure_llm
 from Prompts import Prompts
-from Workflows.BasicToolNode import BasicToolNode
-from ChatModels.TokenManager import TokenManager 
+from Workflows.BasicToolNode import BasicToolNode 
 from Workflows.Tools import tools
 
 # Define the state of the graph
@@ -34,7 +33,7 @@ def route_tools(state: State):
 
 def create_graph(memory: MemorySaver):
     # Get the LLM Chat Model
-    llm = CiscoAzureOpenAI(token_manager=TokenManager()).get_llm()
+    llm = get_azure_llm()
     llm_with_tools = llm.bind_tools(tools)
         
     # Create the state graph

@@ -29,21 +29,11 @@ if "memory" not in st.session_state:
 for var, default in {
     "total_token_usage": 0,
     "last_token_usage": 0,
-    "show_logs": False,
-    "login_time": time.time(),
+    "show_logs": False, 
     "graph": create_graph(st.session_state["memory"]),  # Now memory is available
 }.items():
     if var not in st.session_state:
         st.session_state[var] = default
-
-
-def check_and_reinstantiate_graph():
-    current_time = time.time()
-    elapsed_time = current_time - st.session_state["login_time"]
-    if elapsed_time >= 3600:  # 60 minutes * 60 seconds
-        st.session_state["graph"] = create_graph(st.session_state["memory"])
-        st.session_state["login_time"] = current_time  # Reset login time
-        st.toast(":green[oAuth Token was refreshed]", icon=":material/refresh:")
 
 
 # Override with Custom CSS
@@ -52,7 +42,6 @@ with open("style.css") as f:
 
 
 def get_current_timestamp():
-
     # Format HH:MM:SS
     return datetime.now(pytz.timezone("America/Los_Angeles")).strftime("%H:%M:%S")
 
@@ -136,8 +125,6 @@ def response_generator(role, prompt, **kwargs):
     # Define the configuration
     config = get_config()
 
-    show_logs = kwargs.get("show_logs")
-
     with st.spinner("Processing..."):
 
         try:
@@ -162,7 +149,7 @@ def response_generator(role, prompt, **kwargs):
                                 for tool_call in message.tool_calls:
                                     markdown_text = f":green[Calling Tool:]\n\n```abap\n{(tool_call['name'])}\n{(tool_call['args'])}\n```"
                                     print(f"\nAI Tool Call: {markdown_text}")
-                                    if show_logs:
+                                    if st.session_state.show_logs:
                                         yield markdown_text
 
                         elif isinstance(message, ToolMessage):
@@ -175,7 +162,7 @@ def response_generator(role, prompt, **kwargs):
                                     )
                                     markdown_text = f":green[Tool Output:]\n\n```abap\n{formatted_string}\n```"
                                     print(f"\nTool Message Output having ABAP Code")                                    
-                                    if show_logs:
+                                    if st.session_state.show_logs:
                                         yield markdown_text
 
             st.session_state.total_token_usage = cb.total_tokens
@@ -279,9 +266,6 @@ def add_side_bar():
 # Main App
 def main():
 
-    # Check and reinstantiate graph after 1 hour
-    check_and_reinstantiate_graph()
-
     # Initialize chat history
     initialize_chat_history()
 
@@ -321,8 +305,7 @@ def main():
 
             for line in response_generator(
                 "user",
-                prompt,
-                show_logs=st.session_state.show_logs,
+                prompt
             ):
                 response_lines.append(line)
                 response_container.markdown("  \n\n".join(response_lines))
